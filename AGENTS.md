@@ -11,6 +11,8 @@ See [TODO.md](./TODO.md) for the current work orders
 
 See the external_examples folder for examples provided by external services
 
+Ask the user for any missing credentials
+
 ## Infrasrtructure
 ### Networking
 - Subnet: `192.168.0.0/22`
