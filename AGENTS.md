@@ -2,7 +2,25 @@
 
 ## Project overview
 
-This is the infrastructure project for my home lab
+This is the infrastructure project for my home lab. While currently not finished there are some overall guide lines to be considered.
+
+### General guidelines
+This is an automation project, no user interaction other than applying changes through terraform and ansible should be required unless strictly required.
+
+See [TODO.md](./TODO.md) for the current work orders
+
+See the external_examples folder for examples provided by external services
+
+## Infrasrtructure
+### Networking
+- Subnet: `192.168.0.0/22`
+- Gateway: `192.168.1.1`
+- DNS: `192.168.1.21`
+
+All addresses in the space `192.168.2.0/24` are reserved for this project.
+
+All virutal machines should have statically assigned IP addresses assigned.
+
 
 ## Terraform
 
