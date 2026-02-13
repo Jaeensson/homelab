@@ -1,8 +1,10 @@
 terraform {
+  required_version = ">= 1.0"
+
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~>0.95.0"
+      version = "0.95.0"
     }
     talos = {
       source  = "siderolabs/talos"
@@ -12,9 +14,11 @@ terraform {
 }
 
 provider "proxmox" {
-  endpoint  = "TBD"
-  api_token = "TBD"
-  insecure  = true
+  endpoint  = var.proxmox_endpoint
+  api_token = var.proxmox_token
+
+  insecure = true
 }
 
-provider "talos" {}
+provider "talos" {
+}
