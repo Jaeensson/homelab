@@ -17,6 +17,11 @@ provider "proxmox" {
   endpoint  = var.proxmox_endpoint
   api_token = var.proxmox_token
 
+  ssh {
+    username = "root"
+    agent    = true
+  }
+
   insecure = true
 }
 

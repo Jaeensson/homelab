@@ -1,0 +1,37 @@
+repositories:
+  - name: traefik
+    url: https://traefik.github.io/charts
+  - name: metallb
+    url: https://metallb.github.io/metallb
+  - name: bedag
+    url: https://bedag.github.io/helm-charts
+
+releases:
+  # --- STAGE: INFRA ---
+  - name: traefik
+    chart: traefik/traefik
+    namespace: traefik
+    version: 39.0.1
+    labels:
+      stage: infra
+    values:
+      - traefik/values.yaml
+
+  - name: metallb
+    namespace: metallb-system
+    chart: metallb/metallb
+    version: 0.15.3
+    createNamespace: true
+    labels:
+      stage: infra
+
+  # --- STAGE: CONFIG ---
+  - name: metallb-config
+    namespace: metallb-system
+    chart: bedag/raw
+    labels:
+      stage: config
+    needs:
+      - metallb-system/metallb
+    values:
+      - metallb/metallb-conf.yaml

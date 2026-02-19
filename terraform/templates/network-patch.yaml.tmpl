@@ -1,0 +1,24 @@
+cluster:
+  allowSchedulingOnControlPlanes: true
+
+machine:
+  time:
+    servers:
+      - time.cloudflare.com
+  network:
+    nameservers:
+%{ for i in dns ~}
+      - ${i}
+%{ endfor ~}
+
+    interfaces:
+      - deviceSelector:
+          busPath: "0*"
+        dhcp: false
+        addresses:
+          - ${ip}${netmask}
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: ${gateway}
+    

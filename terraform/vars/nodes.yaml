@@ -1,0 +1,15 @@
+---
+controlplanes:
+  - cores: 4
+    ram: 16384
+    ip: 192.168.2.100
+    disk_size: 50
+workers:
+  - cores: 4
+    ram: 16384
+    ip: 192.168.2.101
+    disk_size: 50
+  - cores: 4
+    ram: 16384
+    ip: 192.168.2.102
+    disk_size: 50
