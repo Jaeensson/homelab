@@ -38,10 +38,10 @@ resource "proxmox_virtual_environment_download_file" "talos_iso" {
 }
 
 resource "proxmox_virtual_environment_vm" "vm" {
-  for_each  = local.all_nodes
-  name      = each.value.name
-  node_name = var.proxmox_node
-  vm_id     = each.value.id
+  for_each        = local.all_nodes
+  name            = each.value.name
+  node_name       = var.proxmox_node
+  vm_id           = each.value.id
   keyboard_layout = "sv"
 
   agent {

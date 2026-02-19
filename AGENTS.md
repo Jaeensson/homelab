@@ -1,63 +1,174 @@
-# AGENTS.md
+# AGENTS.md - Coding Agent Guidelines
 
-## Project overview
+This document provides guidelines for AI coding agents working in this homelab infrastructure repository.
 
-This is the infrastructure project for my home lab. While currently not finished there are some overall guide lines to be considered.
+## Repository Overview
 
-### General guidelines
-This is an automation project, no user interaction other than applying changes through terraform and ansible should be required unless strictly required.
+This is a homelab infrastructure repository managing:
+- **Terraform**: Proxmox VM provisioning with Talos OS (Kubernetes)
+- **Helmfile**: Kubernetes deployments (Traefik, MetalLB)
+- **Ansible**: Placeholder for future automation
 
-See [TODO.md](./TODO.md) for the current work orders
+## Build/Lint/Test Commands
 
-See the external_examples folder for examples provided by external services
+### Terraform
 
-Ask the user for any missing credentials
+```bash
+cd terraform
 
-## Infrasrtructure
-### Networking
-- Subnet: `192.168.0.0/22`
-- Gateway: `192.168.1.1`
-- DNS: `192.168.1.21`
+terraform init
+terraform plan
+terraform apply
+terraform destroy
 
-All addresses in the space `192.168.2.0/24` are reserved for this project.
+terraform fmt -recursive
+terraform validate
+tflint
 
-All virutal machines should have statically assigned IP addresses assigned.
+terraform plan -target=proxmox_virtual_environment_vm.vm["controlplanes0"]
+terraform apply -target=proxmox_virtual_environment_vm.vm["worker0"]
+```
 
+### Helmfile
 
-## Terraform
+```bash
+cd helm
 
-### Running 
-- Initialize backend: `terraform init`
-- Plan changes: `terraform plan`
-- Apply changes: `terraform apply`
-- Validate configuration: `terraform validate`
-- Format code: `terraform fmt -recursive`
+helmfile lint
+helmfile diff
+helmfile apply
+helmfile destroy
 
-### Code style
+helmfile -l stage=infra apply
+helmfile -l stage=config apply
+helmfile -n traefik apply
+```
 
-- Use 2 spaces for indentation in `.tf` files
-- Use lowercase with underscores for resource names: `module.virtual_machine`, `var.proxmox_url`
-- Group related resources using locals blocks
-- Always add descriptive comments for complex configurations
-- Use variables for all environment-specific values
+### Individual Helm Chart Testing
 
-### Folder structure
+```bash
+helm template traefik traefik/traefik -f traefik/values.yaml --debug
+helm lint metallb/
+```
 
-- `modules/` - Reusable Terraform modules (proxmox_vms, lxc_container)
-- `templates/` - Template files that may be of use, such as cloud-init configuration files
+## Project Structure
 
-### Terraform conventions
+```
+├── terraform/
+│   ├── main.tf              # Main resources (VMs, Talos images)
+│   ├── providers.tf         # Provider configurations
+│   ├── variables.tf         # Input variables
+│   ├── build-*.tf           # Code generation (scripts, patches)
+│   ├── vars/
+│   │   ├── nodes.yaml       # Node definitions (controlplanes, workers)
+│   │   └── network.yaml     # Network configuration
+│   ├── templates/           # Terraform template files
+│   └── files/               # Generated scripts (gitignored)
+├── helm/
+│   ├── helmfile.yaml        # Release definitions
+│   ├── traefik/values.yaml  # Traefik configuration
+│   └── metallb/             # MetalLB configuration
+└── ansible/                 # Future automation
+```
 
-- **Variables**: Define in `variables.tf`, never hardcode sensitive values
-- **Modules**: Create reusable modules for common patterns (e.g., lxc_container)
-- **Version pinning**: Pin provider versions for reproducibility
+## Code Style Guidelines
 
-## Security
-- Never commit secrets, passwords, or API keys
+### Terraform
 
-### Storage
-- Locally stored secrets are permitted during development
-- Target is to fetch all secrets from Bitwarden
+- **Provider versions**: Pin versions in `providers.tf`
+- **Variables**: Always include `description`, `type`, and mark sensitive with `sensitive = true`
+- **Naming**: Use snake_case for resources and variables
+- **Organization**: Split logical blocks into separate files (`build-*.tf`, `variables.tf`)
+- **Templates**: Use `templatefile()` with `.tmpl` extension for generated scripts
+- **Locals**: Group computed values in `locals` blocks in `build-node-list.tf`
+- **For_each**: Prefer `for_each` over `count` for resource iteration
+- **Comments**: Comment out resources rather than deleting during development
 
-## Ansible
-TBD
+```hcl
+variable "example" {
+  description = "Purpose of this variable"
+  type        = string
+  sensitive   = true  # For secrets
+}
+```
+
+### YAML (Helmfile, Config)
+
+- **Indentation**: 2 spaces
+- **Document start**: Use `---` at file beginning
+- **Lists**: Use hyphen with space (`- item`)
+- **Organization**: Group releases by stage with comments (`# --- STAGE: INFRA ---`)
+- **Labels**: Use `stage` label to group deployments
+
+### Shell Scripts
+
+- **Shebang**: Always start with `#!/bin/bash`
+- **Generated files**: These live in `terraform/files/` and are gitignored
+- **Templates**: Edit `.tmpl` files, not generated scripts
+
+### Naming Conventions
+
+| Resource Type | Convention | Example |
+|--------------|------------|---------|
+| Terraform resources | snake_case | `proxmox_virtual_environment_vm` |
+| Terraform locals | snake_case | `all_nodes`, `controlplanes` |
+| YAML keys | snake_case | `disk_size`, `clustername` |
+| VM names | hyphenated | `talos-ctrl-0`, `talos-wrkr-1` |
+| Kubernetes namespaces | lowercase | `traefik`, `metallb-system` |
+| Helm releases | lowercase | `metallb-config` |
+
+## Error Handling
+
+### Terraform
+
+- Use `depends_on` for explicit dependencies
+- Use `stop_on_destroy = true` for VMs
+- Set `overwrite_unmanaged = true` for downloaded files
+
+### Helmfile
+
+- Use `needs` to specify dependency order between releases
+- Use `createNamespace: true` for new namespaces
+
+## Security Guidelines
+
+- **Never commit**: `.tfvars` files, `terraform.tfstate`, `kubeconfig`, TLS certs
+- **Sensitive variables**: Always mark with `sensitive = true`
+- **Secrets in YAML**: Use `stringData` for Kubernetes secrets (but avoid in production)
+- **Proxmox token**: Pass via environment variable or `.tfvars`
+
+## Gitignore Patterns
+
+```
+.ansible
+terraform/*.tfvars
+terraform/.terraform*
+terraform/terraform.tfstate*
+files/
+```
+
+## Common Tasks
+
+### Adding a new worker node
+
+1. Edit `terraform/vars/nodes.yaml`:
+```yaml
+workers:
+  - cores: 4
+    ram: 16384
+    ip: 192.168.2.103
+    disk_size: 50
+```
+
+2. Run `terraform plan` and `terraform apply`
+
+### Adding a new Helm release
+
+1. Add repository to `helm/helmfile.yaml` if needed
+2. Add release with appropriate `stage` label
+3. Run `helmfile diff` to preview changes
+
+### Updating Talos version
+
+1. Update `terraform/variables.tf` default value
+2. Run `terraform apply` to download new ISO

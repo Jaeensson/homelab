@@ -5,13 +5,26 @@ repositories:
     url: https://metallb.github.io/metallb
   - name: bedag
     url: https://bedag.github.io/helm-charts
+  - name: wiremind
+    url: https://wiremind.github.io/wiremind-helm-charts
 
 releases:
+  # --- STAGE: CRDS ---
+  - name: gateway-api-crds
+    namespace: kube-system
+    chart: wiremind/gateway-api-crds
+    version: 1.4.0
+    labels:
+      stage: crds
+
   # --- STAGE: INFRA ---
   - name: traefik
     chart: traefik/traefik
     namespace: traefik
     version: 39.0.1
+    createNamespace: true
+    needs:
+      - kube-system/gateway-api-crds
     labels:
       stage: infra
     values:
@@ -24,6 +37,10 @@ releases:
     createNamespace: true
     labels:
       stage: infra
+    hooks:
+      - events: ["postsync"]
+        command: "kubectl"
+        args: ["label", "--overwrite", "namespace", "metallb-system", "pod-security.kubernetes.io/enforce=privileged"]
 
   # --- STAGE: CONFIG ---
   - name: metallb-config

@@ -8,7 +8,7 @@ resource "local_file" "network_patches" {
       netmask = local.network.netmask
       gateway = local.network.gateway
       dns     = local.network.dns
-      network     = local.network.network
+      network = local.network.network
     }
   )
   filename = "files/patch-${each.value.name}.yaml"
