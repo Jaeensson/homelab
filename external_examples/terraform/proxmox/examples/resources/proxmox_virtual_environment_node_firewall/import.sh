@@ -1,1 +1,0 @@
-terraform import proxmox_virtual_environment_node_firewall.node-pve1 pve1
