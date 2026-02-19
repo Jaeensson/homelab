@@ -6,68 +6,74 @@ This document provides guidelines for AI coding agents working in this homelab i
 
 This is a homelab infrastructure repository managing:
 - **Terraform**: Proxmox VM provisioning with Talos OS (Kubernetes)
-- **Helmfile**: Kubernetes deployments (Traefik, MetalLB)
+- **Helmfile**: Kubernetes deployments (Traefik, MetalLB) with staged releases
 - **Ansible**: Placeholder for future automation
 
 ## Build/Lint/Test Commands
+
+### Makefile (Recommended)
+
+```bash
+make bootstrap      # Full deploy: terraform → talos → helmfile
+make deploy         # Deploy/update helmfile releases
+make clean          # Remove helm releases, namespaces & CRDs
+
+# Terraform
+make tf-init        make tf-plan        make tf-apply       make tf-destroy
+
+# Talos
+make talos-setup    make talos-bootstrap  make kubeconfig
+
+# Helmfile (staged)
+make helm-crds      make helm-infra     make helm-config    make helm-sync      make helm-apply     make helm-diff      make helm-destroy
+```
 
 ### Terraform
 
 ```bash
 cd terraform
-
 terraform init
 terraform plan
-terraform apply
-terraform destroy
-
-terraform fmt -recursive
-terraform validate
-tflint
-
-terraform plan -target=proxmox_virtual_environment_vm.vm["controlplanes0"]
 terraform apply -target=proxmox_virtual_environment_vm.vm["worker0"]
+terraform fmt -recursive && terraform validate && tflint
 ```
 
 ### Helmfile
 
 ```bash
 cd helm
-
-helmfile lint
-helmfile diff
-helmfile apply
-helmfile destroy
-
-helmfile -l stage=infra apply
-helmfile -l stage=config apply
-helmfile -n traefik apply
+helmfile -l stage=crds sync      # CRDs first (use sync, not apply)
+helmfile -l stage=infra sync
+helmfile -l stage=config sync
+helmfile apply                    # For updates after first install
 ```
+
+> **Note**: Use `sync` for first-time installs. `apply` fails with helm-diff when CRDs don't exist yet.
 
 ### Individual Helm Chart Testing
 
 ```bash
 helm template traefik traefik/traefik -f traefik/values.yaml --debug
-helm lint metallb/
 ```
 
 ## Project Structure
 
 ```
+├── Makefile                 # Primary workflow commands
 ├── terraform/
-│   ├── main.tf              # Main resources (VMs, Talos images)
-│   ├── providers.tf         # Provider configurations
+│   ├── main.tf              # VM resources, Talos image factory
+│   ├── providers.tf         # Provider configurations (pinned versions)
 │   ├── variables.tf         # Input variables
 │   ├── build-*.tf           # Code generation (scripts, patches)
 │   ├── vars/
 │   │   ├── nodes.yaml       # Node definitions (controlplanes, workers)
 │   │   └── network.yaml     # Network configuration
-│   ├── templates/           # Terraform template files
+│   ├── templates/           # .tmpl files for generated scripts
 │   └── files/               # Generated scripts (gitignored)
 ├── helm/
-│   ├── helmfile.yaml        # Release definitions
-│   ├── traefik/values.yaml  # Traefik configuration
-│   └── metallb/             # MetalLB configuration
+│   ├── helmfile.yaml        # Releases organized by stage
+│   ├── traefik/values.yaml
+│   └── metallb/metallb-conf.yaml
 └── ansible/                 # Future automation
 ```
 
@@ -75,38 +81,53 @@ helm lint metallb/
 
 ### Terraform
 
-- **Provider versions**: Pin versions in `providers.tf`
-- **Variables**: Always include `description`, `type`, and mark sensitive with `sensitive = true`
-- **Naming**: Use snake_case for resources and variables
-- **Organization**: Split logical blocks into separate files (`build-*.tf`, `variables.tf`)
-- **Templates**: Use `templatefile()` with `.tmpl` extension for generated scripts
-- **Locals**: Group computed values in `locals` blocks in `build-node-list.tf`
-- **For_each**: Prefer `for_each` over `count` for resource iteration
-- **Comments**: Comment out resources rather than deleting during development
+- Pin provider versions in `providers.tf`
+- Variables: include `description`, `type`, `sensitive = true` for secrets
+- Use `for_each` over `count` for resource iteration
+- Split logical blocks into separate files (`build-*.tf`)
+- Use `templatefile()` with `.tmpl` extension for generated scripts
+- Comment out resources during development rather than deleting
 
 ```hcl
-variable "example" {
-  description = "Purpose of this variable"
+variable "proxmox_token" {
+  description = "Proxmox API token"
   type        = string
-  sensitive   = true  # For secrets
+  sensitive   = true
 }
 ```
 
 ### YAML (Helmfile, Config)
 
-- **Indentation**: 2 spaces
-- **Document start**: Use `---` at file beginning
-- **Lists**: Use hyphen with space (`- item`)
-- **Organization**: Group releases by stage with comments (`# --- STAGE: INFRA ---`)
-- **Labels**: Use `stage` label to group deployments
+- 2-space indentation
+- Use `---` at file beginning
+- Group releases by `stage` label with comments
+- Use `needs` for dependency ordering between releases
+- Use `hooks` for post-install actions (e.g., namespace labeling)
+
+```yaml
+- name: metallb
+  namespace: metallb-system
+  labels:
+    stage: infra
+  hooks:
+    - events: ["postsync"]
+      command: "kubectl"
+      args: ["label", "--overwrite", "namespace", "metallb-system", "pod-security.kubernetes.io/enforce=privileged"]
+```
+
+### Makefile
+
+- Use `.PHONY` for all targets
+- Group targets by category with comments
+- Use variables for common paths (`TF_DIR`, `HELM_DIR`)
 
 ### Shell Scripts
 
-- **Shebang**: Always start with `#!/bin/bash`
-- **Generated files**: These live in `terraform/files/` and are gitignored
-- **Templates**: Edit `.tmpl` files, not generated scripts
+- Always start with shebang: `#!/bin/bash`
+- Generated files live in `terraform/files/` (gitignored)
+- Edit `.tmpl` templates, not generated scripts
 
-### Naming Conventions
+## Naming Conventions
 
 | Resource Type | Convention | Example |
 |--------------|------------|---------|
@@ -116,59 +137,33 @@ variable "example" {
 | VM names | hyphenated | `talos-ctrl-0`, `talos-wrkr-1` |
 | Kubernetes namespaces | lowercase | `traefik`, `metallb-system` |
 | Helm releases | lowercase | `metallb-config` |
+| Helmfile stages | lowercase | `crds`, `infra`, `config` |
 
-## Error Handling
+## Security & Best Practices
 
-### Terraform
-
-- Use `depends_on` for explicit dependencies
-- Use `stop_on_destroy = true` for VMs
-- Set `overwrite_unmanaged = true` for downloaded files
-
-### Helmfile
-
-- Use `needs` to specify dependency order between releases
-- Use `createNamespace: true` for new namespaces
-
-## Security Guidelines
-
-- **Never commit**: `.tfvars` files, `terraform.tfstate`, `kubeconfig`, TLS certs
+- **Never commit**: `.tfvars`, `terraform.tfstate`, `kubeconfig`, TLS certs
 - **Sensitive variables**: Always mark with `sensitive = true`
-- **Secrets in YAML**: Use `stringData` for Kubernetes secrets (but avoid in production)
-- **Proxmox token**: Pass via environment variable or `.tfvars`
-
-## Gitignore Patterns
-
-```
-.ansible
-terraform/*.tfvars
-terraform/.terraform*
-terraform/terraform.tfstate*
-files/
-```
+- **MetalLB on Talos**: Requires `pod-security.kubernetes.io/enforce=privileged` label on namespace (handled by helmfile hook)
+- **Helmfile dependencies**: Use `needs` to ensure proper install order (CRDs → Infra → Config)
 
 ## Common Tasks
 
-### Adding a new worker node
+### Add a worker node
 
-1. Edit `terraform/vars/nodes.yaml`:
-```yaml
-workers:
-  - cores: 4
-    ram: 16384
-    ip: 192.168.2.103
-    disk_size: 50
+Edit `terraform/vars/nodes.yaml` and run `make tf-apply`.
+
+### Add a Helm release
+
+Add to `helm/helmfile.yaml` with appropriate `stage` label and `needs` if dependencies exist.
+
+### First-time cluster bootstrap
+
+```bash
+make bootstrap
 ```
 
-2. Run `terraform plan` and `terraform apply`
+### Update helmfile releases
 
-### Adding a new Helm release
-
-1. Add repository to `helm/helmfile.yaml` if needed
-2. Add release with appropriate `stage` label
-3. Run `helmfile diff` to preview changes
-
-### Updating Talos version
-
-1. Update `terraform/variables.tf` default value
-2. Run `terraform apply` to download new ISO
+```bash
+make helm-sync    # or: make deploy
+```
