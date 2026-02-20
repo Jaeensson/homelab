@@ -1,0 +1,4 @@
+creation_rules:
+  - age: >-
+      age1z744d4wf8529hku99tfzs9lhkzxf4avwf7nmdp2lv27hk2ufapqst4raqy
+    #path_regex: helm/infisical/secrets\.enc\.yaml$

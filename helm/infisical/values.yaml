@@ -1,0 +1,39 @@
+nameOverride: infisical
+fullnameOverride: infisical
+
+infisical:
+  enabled: true
+  name: infisical
+  autoDatabaseSchemaMigration: true
+  replicaCount: 1
+  image:
+    repository: infisical/infisical
+    tag: "v0.151.0"
+    pullPolicy: IfNotPresent
+  kubeSecretRef: "infisical-bootstrap"
+  service:
+    type: ClusterIP
+    port: 8080
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  nginx:
+    enabled: false
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  hostName: infisical.homelab.local
+  tls:
+    - secretName: infisical-tls
+      hosts:
+        - infisical.homelab.local
+redis:
+  enabled: true
+  auth:
+    enabled: false
+
+postgresql:
+  enabled: true
+  auth:
+    password: "{{ .Values.POSTGRES_PASSWORD }}"

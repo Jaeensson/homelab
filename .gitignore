@@ -4,3 +4,8 @@ terraform/.terraform*
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 files/
+
+# SOPS
+.sops.keys
+*.dec.yaml
+helm/infisical/secrets.yaml

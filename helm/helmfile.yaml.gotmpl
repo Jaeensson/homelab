@@ -7,6 +7,10 @@ repositories:
     url: https://bedag.github.io/helm-charts
   - name: wiremind
     url: https://wiremind.github.io/wiremind-helm-charts
+  - name: infisical
+    url: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
+  # - name: containeroo
+  #   url: https://charts.containeroo.dev
 
 releases:
   # --- STAGE: CRDS ---
@@ -41,6 +45,37 @@ releases:
       - events: ["postsync"]
         command: "kubectl"
         args: ["label", "--overwrite", "namespace", "metallb-system", "pod-security.kubernetes.io/enforce=privileged"]
+
+
+  # --- STAGE: SECRETS ---
+  # 1. Deploy the Secret manifest first
+  - name: infisical-bootstrap-secret
+    namespace: infisical
+    chart: bedag/raw
+    labels:
+      stage: secrets
+    createNamespace: true
+    values:
+      - resources: 
+        - {{ readFile "infisical/secrets.yaml" | fromYaml | toJson }}
+
+  # 2. Deploy the Operator
+  - name: infisical-secrets-operator
+    namespace: infisical
+    chart: infisical/secrets-operator
+    labels:
+      stage: secrets
+    needs:
+      - infisical/infisical-bootstrap-secret
+    values:
+      # Tell the operator to use the secret you just created
+      # for its own authentication if required
+      - controllerManager:
+          manager:
+            env:
+              - name: INFISICAL_BOOTSTRAP_SECRET_NAME
+                value: "infisical-bootstrap"
+      - infisical/values.yaml
 
   # --- STAGE: CONFIG ---
   - name: metallb-config

@@ -6,7 +6,8 @@ This document provides guidelines for AI coding agents working in this homelab i
 
 This is a homelab infrastructure repository managing:
 - **Terraform**: Proxmox VM provisioning with Talos OS (Kubernetes)
-- **Helmfile**: Kubernetes deployments (Traefik, MetalLB) with staged releases
+- **Helmfile**: Kubernetes deployments (Traefik, MetalLB, Infisical) with staged releases
+- **SOPS**: Age-encrypted secrets for bootstrapping Infisical
 - **Ansible**: Placeholder for future automation
 
 ## Build/Lint/Test Commands
@@ -25,7 +26,10 @@ make tf-init        make tf-plan        make tf-apply       make tf-destroy
 make talos-setup    make talos-bootstrap  make kubeconfig
 
 # Helmfile (staged)
-make helm-crds      make helm-infra     make helm-config    make helm-sync      make helm-apply     make helm-diff      make helm-destroy
+make helm-crds      make helm-infra     make helm-secrets    make helm-config    make helm-sync      make helm-apply     make helm-diff      make helm-destroy
+
+# SOPS (secrets encryption)
+make sops-keygen    make sops-encrypt   make sops-decrypt
 ```
 
 ### Terraform
@@ -44,11 +48,32 @@ terraform fmt -recursive && terraform validate && tflint
 cd helm
 helmfile -l stage=crds sync      # CRDs first (use sync, not apply)
 helmfile -l stage=infra sync
+helmfile -l stage=secrets sync   # Infisical + Operator (requires SOPS-decrypted secrets)
 helmfile -l stage=config sync
 helmfile apply                    # For updates after first install
 ```
 
 > **Note**: Use `sync` for first-time installs. `apply` fails with helm-diff when CRDs don't exist yet.
+
+### SOPS (Secrets Encryption)
+
+```bash
+# One-time setup
+make sops-keygen              # Generate age key (backup to password manager!)
+# Update .sops.yaml with your public key
+
+# Encrypt bootstrap secrets
+cd helm/infisical
+# Edit secrets.yaml with your values
+make sops-encrypt
+rm secrets.yaml               # Delete plaintext after encrypting
+
+# Decrypt for editing
+make sops-decrypt
+# Edit secrets.yaml
+make sops-encrypt
+rm secrets.yaml
+```
 
 ### Individual Helm Chart Testing
 
@@ -60,6 +85,8 @@ helm template traefik traefik/traefik -f traefik/values.yaml --debug
 
 ```
 ├── Makefile                 # Primary workflow commands
+├── .sops.yaml               # SOPS encryption config
+├── .sops.keys               # Age private key (gitignored, BACKUP!)
 ├── terraform/
 │   ├── main.tf              # VM resources, Talos image factory
 │   ├── providers.tf         # Provider configurations (pinned versions)
@@ -73,7 +100,11 @@ helm template traefik traefik/traefik -f traefik/values.yaml --debug
 ├── helm/
 │   ├── helmfile.yaml        # Releases organized by stage
 │   ├── traefik/values.yaml
-│   └── metallb/metallb-conf.yaml
+│   ├── metallb/metallb-conf.yaml
+│   ├── infisical/
+│   │   ├── values.yaml      # Infisical helm values
+│   │   └── secrets.enc.yaml # SOPS-encrypted bootstrap secrets
+│   └── secrets/             # InfisicalSecret CRDs
 └── ansible/                 # Future automation
 ```
 
@@ -137,14 +168,15 @@ variable "proxmox_token" {
 | VM names | hyphenated | `talos-ctrl-0`, `talos-wrkr-1` |
 | Kubernetes namespaces | lowercase | `traefik`, `metallb-system` |
 | Helm releases | lowercase | `metallb-config` |
-| Helmfile stages | lowercase | `crds`, `infra`, `config` |
+| Helmfile stages | lowercase | `crds`, `infra`, `secrets`, `config` |
 
 ## Security & Best Practices
 
-- **Never commit**: `.tfvars`, `terraform.tfstate`, `kubeconfig`, TLS certs
+- **Never commit**: `.tfvars`, `terraform.tfstate`, `kubeconfig`, TLS certs, `.sops.keys`, `secrets.yaml` (decrypted)
 - **Sensitive variables**: Always mark with `sensitive = true`
 - **MetalLB on Talos**: Requires `pod-security.kubernetes.io/enforce=privileged` label on namespace (handled by helmfile hook)
-- **Helmfile dependencies**: Use `needs` to ensure proper install order (CRDs → Infra → Config)
+- **Helmfile dependencies**: Use `needs` to ensure proper install order (CRDs → Infra → Secrets → Config)
+- **SOPS key backup**: Store `.sops.keys` in password manager - losing it means losing access to all encrypted secrets
 
 ## Common Tasks
 
@@ -166,4 +198,24 @@ make bootstrap
 
 ```bash
 make helm-sync    # or: make deploy
+```
+
+### Manage secrets
+
+```bash
+# First-time setup (one-time)
+make sops-keygen
+# Copy the public key output and update .sops.yaml
+
+# Edit bootstrap secrets
+make sops-decrypt
+vim helm/infisical/secrets.yaml
+make sops-encrypt
+rm helm/infisical/secrets.yaml   # Never commit plaintext!
+
+# Add application secrets via Infisical
+# 1. Access Infisical UI at https://infisical.homelab.local
+# 2. Create project, add secrets
+# 3. Create machine identity for the operator
+# 4. Add InfisicalSecret CRD in helm/secrets/
 ```
