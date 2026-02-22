@@ -97,7 +97,7 @@ helm-infra:
 helm-secrets:
 	@if [ ! -f $(HELM_DIR)/infisical/secrets.yaml ]; then \
 		echo "🔐 Decrypting secrets..."; \
-		SOPS_AGE_KEY=$(SOPS_AGE_KEY_FILE) sops -d $(HELM_DIR)/infisical/secrets.enc.yaml > $(HELM_DIR)/infisical/secrets.yaml; \
+		SOPS_AGE_KEY_FILE=$(SOPS_AGE_KEY_FILE) sops -d $(HELM_DIR)/infisical/secrets.enc.yaml > $(HELM_DIR)/infisical/secrets.yaml; \
 	fi
 	@echo "⏳ Waiting for Infisical to be ready..."
 	@for i in $$(seq 1 60); do \

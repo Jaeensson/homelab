@@ -56,26 +56,41 @@ releases:
       stage: secrets
     createNamespace: true
     values:
-      - resources: 
-        - {{ readFile "infisical/secrets.yaml" | fromYaml | toJson }}
+      - resources:
+        - apiVersion: v1
+          kind: Secret
+          metadata:
+            name: infisical-secrets
+            namespace: infisical
+          type: Opaque
+          stringData:
+            AUTH_SECRET: {{ (readFile "infisical/secrets.yaml" | fromYaml).stringData.AUTH_SECRET }}
+            ENCRYPTION_KEY: {{ (readFile "infisical/secrets.yaml" | fromYaml).stringData.ENCRYPTION_KEY }}
+            SITE_URL: "https://infisical.homelab.local"
 
-  # 2. Deploy the Operator
-  - name: infisical-secrets-operator
+  # 2. Deploy Infisical application
+  - name: infisical
     namespace: infisical
-    chart: infisical/secrets-operator
+    chart: infisical/infisical-standalone
     labels:
       stage: secrets
     needs:
       - infisical/infisical-bootstrap-secret
     values:
-      # Tell the operator to use the secret you just created
-      # for its own authentication if required
+      - infisical/values.yaml
+
+  # 3. Deploy the Secrets Operator
+  - name: infisical-secrets-operator
+    namespace: infisical
+    chart: infisical/secrets-operator
+    labels:
+      stage: secrets
+    values:
       - controllerManager:
           manager:
             env:
               - name: INFISICAL_BOOTSTRAP_SECRET_NAME
-                value: "infisical-bootstrap"
-      - infisical/values.yaml
+                value: "infisical-secrets"
 
   # --- STAGE: CONFIG ---
   - name: metallb-config
