@@ -1,0 +1,63 @@
+bases:
+  - _repositories.yaml
+
+releases:
+  - name: infisical-bootstrap-secret
+    namespace: infisical
+    chart: bedag/raw
+    createNamespace: true
+    values:
+      - resources:
+          - apiVersion: v1
+            kind: Secret
+            metadata:
+              name: infisical-secrets
+              namespace: infisical
+            type: Opaque
+            stringData:
+              AUTH_SECRET: {{ (readFile "../infisical/secrets.yaml" | fromYaml).stringData.AUTH_SECRET }}
+              ENCRYPTION_KEY: {{ (readFile "../infisical/secrets.yaml" | fromYaml).stringData.ENCRYPTION_KEY }}
+              SITE_URL: "https://infisical.homelab.local"
+
+  - name: infisical
+    namespace: infisical
+    chart: infisical/infisical-standalone
+    needs:
+      - infisical/infisical-bootstrap-secret
+    values:
+      - ../infisical/values.yaml
+
+  - name: infisical-secrets-operator
+    namespace: infisical
+    chart: infisical/secrets-operator
+    needs:
+      - infisical/infisical
+    values:
+      - controllerManager:
+          manager:
+            env:
+              - name: INFISICAL_BOOTSTRAP_SECRET_NAME
+                value: "infisical-secrets"
+
+  - name: infisical-route
+    namespace: infisical
+    chart: bedag/raw
+    needs:
+      - infisical/infisical
+    values:
+      - resources:
+          - apiVersion: gateway.networking.k8s.io/v1
+            kind: HTTPRoute
+            metadata:
+              name: infisical
+            spec:
+              parentRefs:
+                - name: traefik-gateway
+                  namespace: traefik
+                  sectionName: websecure
+              hostnames:
+                - infisical.homelab.local
+              rules:
+                - backendRefs:
+                    - name: infisical-infisical-standalone-infisical
+                      port: 8080

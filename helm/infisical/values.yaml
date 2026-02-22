@@ -13,18 +13,7 @@ infisical:
       cpu: 350m
 
 ingress:
-  enabled: true
-  hostName: "infisical.homelab.local"
-  ingressClassName: traefik
-  nginx:
-    enabled: false
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-  tls:
-    - secretName: infisical-tls
-      hosts:
-        - infisical.homelab.local
+  enabled: false
 
 postgresql:
   enabled: true

@@ -1,0 +1,11 @@
+repositories:
+  - name: traefik
+    url: https://traefik.github.io/charts
+  - name: metallb
+    url: https://metallb.github.io/metallb
+  - name: bedag
+    url: https://bedag.github.io/helm-charts
+  - name: wiremind
+    url: https://wiremind.github.io/wiremind-helm-charts
+  - name: infisical
+    url: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/

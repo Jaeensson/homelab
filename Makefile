@@ -27,11 +27,7 @@ help:
 	@echo "  make kubeconfig     Re-export kubeconfig from talos"
 	@echo ""
 	@echo "⛵ Helmfile:"
-	@echo "  make helm-crds      Install CRDs stage"
-	@echo "  make helm-infra     Install infra stage"
-	@echo "  make helm-secrets   Install secrets stage (Infisical)"
-	@echo "  make helm-config    Install config stage"
-	@echo "  make helm-sync      Sync all stages in order"
+	@echo "  make helm-sync      Sync all helmfile releases"
 	@echo "  make helm-apply     Apply all (for updates)"
 	@echo "  make helm-diff      Show pending changes"
 	@echo "  make helm-destroy   Remove all helm releases"
@@ -85,47 +81,14 @@ kubeconfig:
 	cd $(TF_DIR) && TALOSCONFIG=$(TALOSCONFIG) talosctl kubeconfig ./files
 
 # Helmfile targets
-.PHONY: helm-crds
-helm-crds:
-	cd $(HELM_DIR) && helmfile -l stage=crds sync
-
-.PHONY: helm-infra
-helm-infra:
-	cd $(HELM_DIR) && helmfile -l stage=infra sync
-
-.PHONY: helm-secrets
-helm-secrets:
-	@if [ ! -f $(HELM_DIR)/infisical/secrets.yaml ]; then \
+.PHONY: helm-sync
+helm-sync:
+	@if [ -f $(HELM_DIR)/infisical/secrets.enc.yaml ] && [ ! -f $(HELM_DIR)/infisical/secrets.yaml ]; then \
 		echo "🔐 Decrypting secrets..."; \
 		SOPS_AGE_KEY_FILE=$(SOPS_AGE_KEY_FILE) sops -d $(HELM_DIR)/infisical/secrets.enc.yaml > $(HELM_DIR)/infisical/secrets.yaml; \
 	fi
-	@echo "⏳ Waiting for Infisical to be ready..."
-	@for i in $$(seq 1 60); do \
-		if kubectl get pods -n infisical -l app.kubernetes.io/name=infisical -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q "True"; then \
-			echo "✅ Infisical ready"; \
-			break; \
-		fi; \
-		echo "⏳ Waiting for Infisical... ($$i/60)"; \
-		sleep 2; \
-	done
-	cd $(HELM_DIR) && helmfile -l stage=secrets sync
+	cd $(HELM_DIR) && helmfile sync
 	@rm -f $(HELM_DIR)/infisical/secrets.yaml
-
-.PHONY: helm-config
-helm-config:
-	@echo "⏳ Waiting for MetalLB webhook to be ready..."
-	@for i in $$(seq 1 30); do \
-		if kubectl get pods -n metallb-system -l app.kubernetes.io/component=controller -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q "True"; then \
-			echo "✅ MetalLB controller ready"; \
-			break; \
-		fi; \
-		echo "⏳ Waiting for MetalLB controller... ($$i/30)"; \
-		sleep 2; \
-	done
-	cd $(HELM_DIR) && helmfile -l stage=config sync
-
-.PHONY: helm-sync
-helm-sync: helm-crds helm-infra helm-secrets helm-config
 	@echo "✅ All helmfile releases synced!"
 
 .PHONY: helm-apply
