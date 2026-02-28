@@ -1,7 +1,6 @@
 variable "proxmox_endpoint" {
   description = "Proxmox API endpoint URL"
   type        = string
-  default     = "https://192.168.2.10:8006/"
 }
 
 variable "proxmox_token" {
@@ -11,32 +10,6 @@ variable "proxmox_token" {
 }
 
 variable "proxmox_node" {
-  description = "Proxmox node name VMs will where be created"
+  description = "Proxmox node name"
   type        = string
-  default     = "pve"
-}
-
-variable "proxmox_storage" {
-  description = "Proxmox storage pool for VM disks"
-  type        = string
-  default     = "local-lvm"
-}
-
-variable "talos_version" {
-  description = "Talos OS version to use"
-  type        = string
-  default     = "1.12.4"
-}
-
-
-variable "infisical_client_id" {
-  description = "Infisical client id for universal authentication"
-  type        = string
-  sensitive   = true
-}
-
-variable "infisical_client_secret" {
-  description = "Infisical client secret for universal authentication"
-  type        = string
-  sensitive   = true
 }

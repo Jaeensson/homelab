@@ -2,13 +2,7 @@ data "talos_image_factory_extensions_versions" "this" {
   # get the latest talos version
   talos_version = var.talos_version
   filters = {
-    names = [
-      "siderolabs/qemu-guest-agent",
-      "siderolabs/i915",
-      "siderolabs/intel-ucode",
-      "siderolabs/iscsi-tools",
-      "siderolabs/util-linux-tools"
-    ]
+    names = concat(["siderolabs/qemu-guest-agent"], var.talos_extensions)
   }
 }
 
@@ -32,26 +26,25 @@ data "talos_image_factory_urls" "this" {
 }
 
 resource "proxmox_virtual_environment_download_file" "talos_image" {
+  for_each            = local.all_proxmox_nodes
   content_type        = "iso"
   datastore_id        = "local"
-  node_name           = var.proxmox_node
+  node_name           = each.value
   url                 = data.talos_image_factory_urls.this.urls.iso
   file_name           = "talos-${data.talos_image_factory_urls.this.talos_version}-${data.talos_image_factory_urls.this.platform}-${data.talos_image_factory_urls.this.architecture}.iso"
   overwrite_unmanaged = true
 }
 
 resource "proxmox_virtual_environment_vm" "vm" {
-  for_each        = local.all_nodes
-  name            = each.value.name
-  node_name       = var.proxmox_node
-  vm_id           = each.value.id
+  count           = length(local.all_nodes)
+  name            = local.all_nodes[count.index].node_name
+  node_name       = local.all_nodes[count.index].proxmox_node
+  vm_id           = local.all_nodes[count.index].vm_id
   keyboard_layout = "sv"
 
   agent {
     enabled = true
   }
-
-  stop_on_destroy = true
 
   startup {
     order      = "3"
@@ -59,34 +52,33 @@ resource "proxmox_virtual_environment_vm" "vm" {
     down_delay = "60"
   }
 
-  description = "Talos controlplane node - managed by Terraform"
+  description = "Talos vm - managed by Terraform"
 
   operating_system {
     type = "l26"
   }
 
   cpu {
-    cores = each.value.cores
-    type  = "x86-64-v2-AES"
+    cores = local.all_nodes[count.index].cpu_cores
+    type  = var.cpu_type
   }
 
   memory {
-    dedicated = each.value.ram
+    dedicated = local.all_nodes[count.index].ram_mb
   }
 
   disk {
     datastore_id = var.proxmox_storage
     interface    = "scsi0"
-    size         = each.value.disk_size
+    size         = local.all_nodes[count.index].disk_size_gb
   }
 
   network_device {
-    bridge = local.network.bridge
+    bridge = var.network_bridge
   }
 
   cdrom {
-    enabled   = true
-    file_id   = proxmox_virtual_environment_download_file.talos_image.id
+    file_id   = proxmox_virtual_environment_download_file.talos_image[local.all_nodes[count.index].proxmox_node].id
     interface = "ide3"
   }
 
@@ -98,14 +90,14 @@ resource "proxmox_virtual_environment_vm" "vm" {
   initialization {
     ip_config {
       ipv4 {
-        address = "${each.value.ip}${local.network.netmask}"
-        gateway = local.network.gateway
+        address = "${local.all_nodes[count.index].ip}${var.network_netmask}"
+        gateway = var.network_gateway
       }
     }
 
     dns {
       domain  = "egenitres.se"
-      servers = local.network.dns
+      servers = var.network_dns
     }
 
     datastore_id = "local-lvm"
