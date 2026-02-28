@@ -3,9 +3,11 @@ data "talos_image_factory_extensions_versions" "this" {
   talos_version = var.talos_version
   filters = {
     names = [
-      "qemu-guest-agent",
-      "i915",
-      "intel-ucode"
+      "siderolabs/qemu-guest-agent",
+      "siderolabs/i915",
+      "siderolabs/intel-ucode",
+      "siderolabs/iscsi-tools",
+      "siderolabs/util-linux-tools"
     ]
   }
 }
@@ -26,14 +28,15 @@ data "talos_image_factory_urls" "this" {
   talos_version = var.talos_version
   schematic_id  = talos_image_factory_schematic.this.id
   platform      = "nocloud"
+  architecture  = "amd64"
 }
 
-resource "proxmox_virtual_environment_download_file" "talos_iso" {
+resource "proxmox_virtual_environment_download_file" "talos_image" {
   content_type        = "iso"
   datastore_id        = "local"
   node_name           = var.proxmox_node
   url                 = data.talos_image_factory_urls.this.urls.iso
-  file_name           = "talos-${var.talos_version}-nocloud-amd64.iso"
+  file_name           = "talos-${data.talos_image_factory_urls.this.talos_version}-${data.talos_image_factory_urls.this.platform}-${data.talos_image_factory_urls.this.architecture}.iso"
   overwrite_unmanaged = true
 }
 
@@ -48,14 +51,15 @@ resource "proxmox_virtual_environment_vm" "vm" {
     enabled = true
   }
 
-  boot_order = [
-    "scsi0",
-    "ide3"
-  ]
+  stop_on_destroy = true
+
+  startup {
+    order      = "3"
+    up_delay   = "60"
+    down_delay = "60"
+  }
 
   description = "Talos controlplane node - managed by Terraform"
-
-  stop_on_destroy = true
 
   operating_system {
     type = "l26"
@@ -76,18 +80,22 @@ resource "proxmox_virtual_environment_vm" "vm" {
     size         = each.value.disk_size
   }
 
-  cdrom {
-    file_id = proxmox_virtual_environment_download_file.talos_iso.id
-  }
-
   network_device {
     bridge = local.network.bridge
   }
 
-  initialization {
-    # meta_data_file_id = proxmox_virtual_environment_file.controlplane_user_data.id
-    # vendor_data_file_id = proxmox_virtual_environment_file.controlplane_user_data.id
+  cdrom {
+    enabled   = true
+    file_id   = proxmox_virtual_environment_download_file.talos_image.id
+    interface = "ide3"
+  }
 
+  boot_order = [
+    "scsi0",
+    "ide3"
+  ]
+
+  initialization {
     ip_config {
       ipv4 {
         address = "${each.value.ip}${local.network.netmask}"
@@ -102,32 +110,4 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
     datastore_id = "local-lvm"
   }
-
 }
-
-# resource "null_resource" "setup_nodes" {
-#   depends_on = [
-#     proxmox_virtual_environment_vm.vm,
-#     local_file.nodes
-#   ]
-#   provisioner "local-exec" {
-#     command = "bash ${path.module}/files/1st-setup-nodes.sh"
-#   }
-# }
-# resource "time_sleep" "wait_30_seconds" {
-#   depends_on = [null_resource.setup_nodes]
-
-#   create_duration = "60s"
-# }
-
-
-# resource "null_resource" "deploy_cluster" {
-#   depends_on = [
-#     null_resource.setup_nodes,
-#     local_file.cluster,
-#     time_sleep.wait_30_seconds
-#   ]
-#   provisioner "local-exec" {
-#     command = "bash ${path.module}/files/2nd-deploy-cluster.sh"
-#   }
-# }

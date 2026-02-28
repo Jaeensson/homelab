@@ -5,4 +5,4 @@ dns:
 netmask: "/22"
 gateway: 192.168.1.1
 network: "192.168.0.0/22"
-clustername: talos-cluster
+cluster_name: talos-cluster

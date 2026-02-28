@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-export TALOSCONFIG=./files/talosconfig
-talosctl config endpoint ${masterip}
-talosctl config node ${masterip}
-talosctl bootstrap
-talosctl kubeconfig ./files
-cp files/kubeconfig ~/.talos/config

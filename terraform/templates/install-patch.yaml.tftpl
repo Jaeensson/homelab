@@ -2,6 +2,20 @@ cluster:
   allowSchedulingOnControlPlanes: true
 
 machine:
+  install: 
+    disk: /dev/sda
+    image: ${image}
+
+  kubelet:
+    extraMounts:
+      - destination: /var/lib/longhorn
+        type: bind
+        source: /var/lib/longhorn
+        options:
+          - bind
+          - rshared
+          - rw
+
   time:
     servers:
       - time.cloudflare.com
@@ -21,4 +35,9 @@ machine:
         routes:
           - network: 0.0.0.0/0
             gateway: ${gateway}
-    
+
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: ${node_name}
+auto: off

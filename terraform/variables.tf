@@ -27,3 +27,16 @@ variable "talos_version" {
   type        = string
   default     = "1.12.4"
 }
+
+
+variable "infisical_client_id" {
+  description = "Infisical client id for universal authentication"
+  type        = string
+  sensitive   = true
+}
+
+variable "infisical_client_secret" {
+  description = "Infisical client secret for universal authentication"
+  type        = string
+  sensitive   = true
+}
