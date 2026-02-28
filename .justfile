@@ -6,3 +6,6 @@ set shell := ['bash', '-euo', 'pipefail', '-c']
 mod k8s "kubernetes"
 mod terraform "terraform"
 
+[private]
+default:
+    just -l
