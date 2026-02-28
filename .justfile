@@ -1,7 +1,7 @@
 #!/usr/bin/env -S just --justfile
 
+set dotenv-load := true
 set quiet := true
-set shell := ['bash', '-euo', 'pipefail', '-c']
 
 mod k8s "kubernetes"
 mod terraform "terraform"
@@ -9,3 +9,12 @@ mod terraform "terraform"
 [private]
 default:
     just -l
+
+deploy:
+    just terraform::apply
+    just terraform::get-config
+    just k8s::wait
+    just k8s::namespaces
+    just k8s::resources
+    just k8s::crds
+    just k8s::apps

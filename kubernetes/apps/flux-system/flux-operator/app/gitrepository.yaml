@@ -10,4 +10,4 @@ spec:
     branch: main
   secretRef:
     name: flux-system
-  url: https://github.com/jaeensson/lab_test.git
+  url: https://github.com/jaeensson/homelab.git

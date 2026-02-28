@@ -29,13 +29,8 @@ releases:
     version: 0.43.0
     values:
       - ./templates/values.yaml.gotmpl
-
-  - name: flux-operator
-    namespace: flux-system
-    chart: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
-    version: 0.43.0
-    values:
-      - ./templates/values.yaml.gotmpl
+    needs:
+      - external-secrets/external-secrets
 
   - name: flux-instance
     namespace: flux-system

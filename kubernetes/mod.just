@@ -10,20 +10,42 @@ kubernetes_dir := justfile_dir() + '/kubernetes'
 default:
     namespaces crds resources
 
+wait:
+    if ! kubectl wait nodes --for=condition=Ready=True --all --timeout=10s &>/dev/null; then \
+        until kubectl wait nodes --for=condition=Ready=False --all --timeout=10s &>/dev/null; do \
+            echo "Nodes not available, waiting for nodes to be available. Retrying in 5 seconds..."; \
+            sleep 5; \
+        done \
+    fi
+
+
 namespaces:
     find "{{ kubernetes_dir }}/apps" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r dir; do \
-        if ! kustomize build "$dir" | yq ea -e 'select(.kind == "Namespace")' | kubectl apply -f -; then \
+        if ! kustomize build "$dir" | yq ea -e 'select(.kind == "Namespace")' | kubectl apply --server-side -f -; then \
             echo "Failed to apply namespaces"; \
         fi; \
     done
 
 crds:
-    if ! helmfile -f "{{ kubernetes_dir }}/bootstrap/helmfile.d/00-crds.yaml" template -q | yq ea -e 'select(.kind == "CustomResourceDefinition")' | kubectl apply -f -; then \
+    if ! helmfile -f "{{ kubernetes_dir }}/bootstrap/helmfile.d/00-crds.yaml" template -q | yq ea -e 'select(.kind == "CustomResourceDefinition")' | kubectl apply --server-side -f -; then \
         echo "Failed to apply crds"; \
     fi;
 
 resources: 
-    envsubst < bootstrap/resources.yaml.tmpl | kubectl apply -f -
+    envsubst < "{{ kubernetes_dir }}/bootstrap/resources.yaml.tmpl" | kubectl apply -f -
 
 apps:
-    helmfile -f "bootstrap/helmfile.d/01-apps.yaml" sync --hide-notes
+    helmfile -f "{{ kubernetes_dir }}/bootstrap/helmfile.d/01-apps.yaml" sync --hide-notes
+
+prune-pods:
+    for phase in Failed Pending Succeeded; do \
+        kubectl delete pods -A --field-selector status.phase="$phase" --ignore-not-found=true; \
+    done
+
+apply-ks ns ks:
+    just k8s render-local-ks "{{ ns }}" "{{ ks }}" | kubectl apply --server-side --force-conflicts --field-manager=kustomize-controller -f /dev/stdin
+
+
+[private]
+render-local-ks ns ks:
+    flux build ks --namespace "{{ ns }}" --path "{{ kubernetes_dir }}/flux/cluster" "{{ ks }}"
