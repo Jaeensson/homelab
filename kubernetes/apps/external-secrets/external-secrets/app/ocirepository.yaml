@@ -1,12 +1,12 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
-  name: flux-operator
+  name: external-secrets
 spec:
   interval: 15m
   layerSelector:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 0.43.0
-  url: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
+    tag: 2.0.1
+  url: oci://ghcr.io/external-secrets/charts/external-secrets
