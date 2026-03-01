@@ -12,15 +12,14 @@ spec:
         namespaces:
           from: All
 
-    # - name: web-secure
-    #   protocol: HTTPS
-    #   port: 443
-    #   allowedRoutes:
-    #     namespaces:
-    #       from: All
-      # tls:
-      #   mode: Terminate
-      #   certificateRefs:
-      #     - name: 
-      #       kind: 
-      #       namespace:
+    - name: web-secure
+      protocol: HTTPS
+      port: 443
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:    
+        - kind: Secret
+          name: egenintres-se-tls
