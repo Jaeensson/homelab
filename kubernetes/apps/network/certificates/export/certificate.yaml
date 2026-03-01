@@ -6,8 +6,8 @@ metadata:
   name: egenintres-se
 spec:
   dnsNames:
-    - egenintres.se
-    - "*.egenintres.se"
+    - test.egenintres.se
+    - "*.test.egenintres.se"
   duration: 160h
   issuerRef:
     kind: ClusterIssuer
