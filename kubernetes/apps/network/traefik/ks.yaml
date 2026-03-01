@@ -6,7 +6,7 @@ metadata:
   namespace: network
 spec:
   interval: 10m0s
-  path: ./kubernetes/apps/traefik/traefik/app
+  path: ./kubernetes/apps/network/traefik/app
   prune: true
   sourceRef:
     kind: GitRepository
