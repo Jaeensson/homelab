@@ -12,7 +12,7 @@ spec:
       # Defines the HTTP entry point named 'web'
       web:
         port: 80
-        nodePort: 30000
+        #nodePort: 30000
         # Instructs this entry point to redirect all traffic to the 'websecure' entry point
         http:
           redirections:
@@ -24,13 +24,18 @@ spec:
       # Defines the HTTPS entry point named 'websecure'
       websecure:
         port: 443
-        nodePort: 30001
+        #nodePort: 30001
 
     # Enables the dashboard in Secure Mode
     api:
       dashboard: true
       insecure: false
 
-    #providers:
-      #kubernetesGateway:
-        #enabled: true
+    providers:
+      kubernetesGateway:
+        enabled: true
+
+    gateway: 
+      enabled: false
+    gatewayClass: 
+      enabled: false
