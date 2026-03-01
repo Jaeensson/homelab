@@ -3,3 +3,6 @@ kind: Kustomization
 namespace: cert-manager
 resources:
   - ./helmrelease.yaml
+  - ./custerissuer.yaml
+  - ./externalsecret.yaml
+  - ./ocirepository.yaml
