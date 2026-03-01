@@ -1,221 +1,164 @@
-# AGENTS.md - Coding Agent Guidelines
+# AGENTS.md - Homelab Infrastructure Repository
 
-This document provides guidelines for AI coding agents working in this homelab infrastructure repository.
+This is a Kubernetes/Terraform homelab infrastructure repository using Flux for GitOps, deployed on Talos Linux via Proxmox.
 
-## Repository Overview
+## Repository Structure
 
-This is a homelab infrastructure repository managing:
-- **Terraform**: Proxmox VM provisioning with Talos OS (Kubernetes)
-- **Helmfile**: Kubernetes deployments (Traefik, MetalLB, Infisical) with staged releases
-- **SOPS**: Age-encrypted secrets for bootstrapping Infisical
-- **Ansible**: Placeholder for future automation
+```
+.
+├── .justfile              # Root justfile with deploy command
+├── .env                   # Environment variables (secrets)
+├── kubernetes/            # Kubernetes manifests and Flux configuration
+│   ├── apps/              # Application manifests (flux-system, external-secrets)
+│   ├── bootstrap/         # Bootstrap resources and helmfiles
+│   └── flux/              # Flux Kustomizations
+└── terraform/             # Terraform for Proxmox + Talos cluster
+    ├── modules/           # Terraform modules
+    └── vars/              # Variable definitions
+```
 
 ## Build/Lint/Test Commands
 
-### Makefile (Recommended)
+This repository uses **just** for task automation. No traditional unit tests exist.
+
+### Just Commands
 
 ```bash
-make bootstrap      # Full deploy: terraform → talos → helmfile
-make deploy         # Deploy/update helmfile releases
-make clean          # Remove helm releases, namespaces & CRDs
+# Full deployment (Terraform + Kubernetes)
+just deploy
 
-# Terraform
-make tf-init        make tf-plan        make tf-apply       make tf-destroy
+# Terraform operations
+just terraform::apply              # Apply Terraform changes
+just terraform::destroy            # Destroy infrastructure
+just terraform::get-config         # Get kubeconfig and talosconfig
 
-# Talos
-make talos-setup    make talos-bootstrap  make kubeconfig
-
-# Helmfile (staged)
-make helm-crds      make helm-infra     make helm-secrets    make helm-config    make helm-sync      make helm-apply     make helm-diff      make helm-destroy
-
-# SOPS (secrets encryption)
-make sops-keygen    make sops-encrypt   make sops-decrypt
+# Kubernetes operations
+just k8s::wait                     # Wait for nodes to be ready
+just k8s::namespaces               # Apply namespace resources
+just k8s::crds                     # Apply CRDs
+just k8s::resources               # Apply bootstrap resources
+just k8s::apps                     # Sync all apps via helmfile
+just k8s::apply-ks <ns> <ks>       # Apply a specific Kustomization
+just k8s::prune-pods              # Delete pods in Failed/Pending/Succeeded phases
 ```
 
-### Terraform
+### Terraform Commands (run from terraform/ directory)
 
 ```bash
 cd terraform
-terraform init
-terraform plan
-terraform apply -target=proxmox_virtual_environment_vm.vm["worker0"]
-terraform fmt -recursive && terraform validate && tflint
+terraform init                    # Initialize providers
+terraform validate               # Validate Terraform syntax
+terraform plan                    # Show planned changes
+terraform apply                   # Apply changes
+terraform destroy                 # Destroy resources
 ```
 
-### Helmfile
+### YAML Formatting/Linting
+
+This project uses **yamlfmt** for YAML validation.
 
 ```bash
-cd helm
-helmfile -l stage=crds sync      # CRDs first (use sync, not apply)
-helmfile -l stage=infra sync
-helmfile -l stage=secrets sync   # Infisical + Operator (requires SOPS-decrypted secrets)
-helmfile -l stage=config sync
-helmfile apply                    # For updates after first install
+# Check YAML formatting (from terraform/ directory)
+yamlfmt -c terraform/.yamlfmt.yaml check .
+
+# Format YAML files
+yamlfmt -c terraform/.yamlfmt.yaml -w .
 ```
 
-> **Note**: Use `sync` for first-time installs. `apply` fails with helm-diff when CRDs don't exist yet.
-
-### SOPS (Secrets Encryption)
-
-```bash
-# One-time setup
-make sops-keygen              # Generate age key (backup to password manager!)
-# Update .sops.yaml with your public key
-
-# Encrypt bootstrap secrets
-cd helm/infisical
-# Edit secrets.yaml with your values
-make sops-encrypt
-rm secrets.yaml               # Delete plaintext after encrypting
-
-# Decrypt for editing
-make sops-decrypt
-# Edit secrets.yaml
-make sops-encrypt
-rm secrets.yaml
-```
-
-### Individual Helm Chart Testing
-
-```bash
-helm template traefik traefik/traefik -f traefik/values.yaml --debug
-```
-
-## Project Structure
-
-```
-├── Makefile                 # Primary workflow commands
-├── .sops.yaml               # SOPS encryption config
-├── .sops.keys               # Age private key (gitignored, BACKUP!)
-├── terraform/
-│   ├── main.tf              # VM resources, Talos image factory
-│   ├── providers.tf         # Provider configurations (pinned versions)
-│   ├── variables.tf         # Input variables
-│   ├── build-*.tf           # Code generation (scripts, patches)
-│   ├── vars/
-│   │   ├── nodes.yaml       # Node definitions (controlplanes, workers)
-│   │   └── network.yaml     # Network configuration
-│   ├── templates/           # .tmpl files for generated scripts
-│   └── files/               # Generated scripts (gitignored)
-├── helm/
-│   ├── helmfile.yaml        # Releases organized by stage
-│   ├── traefik/values.yaml
-│   ├── metallb/metallb-conf.yaml
-│   ├── infisical/
-│   │   ├── values.yaml      # Infisical helm values
-│   │   └── secrets.enc.yaml # SOPS-encrypted bootstrap secrets
-│   └── secrets/             # InfisicalSecret CRDs
-└── ansible/                 # Future automation
-```
+**Configuration**: See `terraform/.yamlfmt.yaml` for formatting rules (basic formatter, block array style, LF line endings).
 
 ## Code Style Guidelines
 
-### Terraform
+### General Principles
 
-- Pin provider versions in `providers.tf`
-- Variables: include `description`, `type`, `sensitive = true` for secrets
-- Use `for_each` over `count` for resource iteration
-- Split logical blocks into separate files (`build-*.tf`)
-- Use `templatefile()` with `.tmpl` extension for generated scripts
-- Comment out resources during development rather than deleting
+1. **GitOps-first**: All changes should be declarative and version-controlled
+2. **Idempotency**: Resources should be idempotent (safe to reapply)
+3. **Separation of concerns**: Bootstrap resources separate from app resources
+4. **Sensitive data**: Never commit secrets; use External Secrets or SOPS
 
-```hcl
-variable "proxmox_token" {
-  description = "Proxmox API token"
-  type        = string
-  sensitive   = true
-}
-```
+### YAML Conventions
 
-### YAML (Helmfile, Config)
+- **File naming**: kebab-case (`helmrelease.yaml`, `kustomization.yaml`, `externalsecret.yaml`)
+- **Indentation**: 2 spaces
+- **Document separators**: Use `---` at start of each YAML document
+- **Block style arrays**: Use block style for multi-line arrays (configured in yamlfmt)
+- **Include document start**: Always include `---` at start of files
+- **Schema annotations**: Include YAML schema for IDE support
 
-- 2-space indentation
-- Use `---` at file beginning
-- Group releases by `stage` label with comments
-- Use `needs` for dependency ordering between releases
-- Use `hooks` for post-install actions (e.g., namespace labeling)
+### Terraform Conventions
 
-```yaml
-- name: metallb
-  namespace: metallb-system
-  labels:
-    stage: infra
-  hooks:
-    - events: ["postsync"]
-      command: "kubectl"
-      args: ["label", "--overwrite", "namespace", "metallb-system", "pod-security.kubernetes.io/enforce=privileged"]
-```
+- **File naming**: snake_case (`main.tf`, `variables.tf`, `providers.tf`)
+- **Variable naming**: snake_case, descriptive names
+- **Sensitive values**: Mark sensitive variables with `sensitive = true`
+- **Provider locking**: Use `.terraform.lock.hcl` for provider versioning
 
-### Makefile
+### Kubernetes/Flux Conventions
 
-- Use `.PHONY` for all targets
-- Group targets by category with comments
-- Use variables for common paths (`TF_DIR`, `HELM_DIR`)
+- **Namespace structure**: `apps/<namespace>/<app>/`
+- **Kustomization layers**: `ks.yaml` (app level), `app/kustomization.yaml`, `app/helmrelease.yaml`
+- **Default policies** (set in cluster ks.yaml):
+  - `deletionPolicy: WaitForTermination`
+  - HelmRelease: `install.crds: CreateReplace`, `upgrade.crds: CreateReplace`
+  - HelmRelease remediation: `remediateLastFailure: true`, `retries: 2`
 
-### Shell Scripts
+### Error Handling
 
-- Always start with shebang: `#!/bin/bash`
-- Generated files live in `terraform/files/` (gitignored)
-- Edit `.tmpl` templates, not generated scripts
+- **Fail fast**: Use `set -euo pipefail` in bash scripts
+- **Graceful degradation**: Use `&>/dev/null` for optional checks
+- **Validation**: Validate before apply with `yq ea -e`
 
-## Naming Conventions
+### Naming Conventions
 
 | Resource Type | Convention | Example |
-|--------------|------------|---------|
-| Terraform resources | snake_case | `proxmox_virtual_environment_vm` |
-| Terraform locals | snake_case | `all_nodes`, `controlplanes` |
-| YAML keys | snake_case | `disk_size`, `clustername` |
-| VM names | hyphenated | `talos-ctrl-0`, `talos-wrkr-1` |
-| Kubernetes namespaces | lowercase | `traefik`, `metallb-system` |
-| Helm releases | lowercase | `metallb-config` |
-| Helmfile stages | lowercase | `crds`, `infra`, `secrets`, `config` |
+|---------------|------------|---------|
+| Files (YAML) | kebab-case | `helmrelease.yaml` |
+| Files (TF) | snake_case | `main.tf` |
+| Variables | snake_case | `proxmox_endpoint` |
+| Kubernetes objects | kebab-case | `external-secrets` |
+| Namespaces | kebab-case | `flux-system` |
 
-## Security & Best Practices
+### Common Patterns
 
-- **Never commit**: `.tfvars`, `terraform.tfstate`, `kubeconfig`, TLS certs, `.sops.keys`, `secrets.yaml` (decrypted)
-- **Sensitive variables**: Always mark with `sensitive = true`
-- **MetalLB on Talos**: Requires `pod-security.kubernetes.io/enforce=privileged` label on namespace (handled by helmfile hook)
-- **Helmfile dependencies**: Use `needs` to ensure proper install order (CRDs → Infra → Secrets → Config)
-- **SOPS key backup**: Store `.sops.keys` in password manager - losing it means losing access to all encrypted secrets
+**Adding a new application:**
+1. Create directory: `kubernetes/apps/<namespace>/<app>/`
+2. Add `namespace.yaml` for the namespace
+3. Add `ks.yaml` for Kustomization
+4. Add `app/` subdirectory with `kustomization.yaml` and `helmrelease.yaml`
+5. Add to appropriate helmfile in `kubernetes/bootstrap/helmfile.d/`
 
-## Common Tasks
+**Updating a Helm release:**
+1. Edit `app/helmrelease.yaml` - update `spec.chartRef` or `spec.values`
+2. Run `just k8s::apps` to sync changes
+3. Verify with `kubectl get hr -A`
 
-### Add a worker node
+### Environment Variables
 
-Edit `terraform/vars/nodes.yaml` and run `make tf-apply`.
+- **`.env`**: Contains local secrets (Proxmox credentials, etc.) - never commit
+- **`example.env`**: Template for required environment variables
+- **`.env` loading**: Enabled via `set dotenv-load := true` in justfiles
 
-### Add a Helm release
+### Pre-Deployment Checklist
 
-Add to `helm/helmfile.yaml` with appropriate `stage` label and `needs` if dependencies exist.
+Before running `just deploy`:
+1. Review Terraform changes with `cd terraform && terraform plan`
+2. Validate YAML with `yamlfmt -c terraform/.yamlfmt.yaml check .`
+3. Verify `.env` has required variables
+4. Backup state if needed (`terraform.tfstate.backup`)
 
-### First-time cluster bootstrap
-
-```bash
-make bootstrap
-```
-
-### Update helmfile releases
-
-```bash
-make helm-sync    # or: make deploy
-```
-
-### Manage secrets
+### Useful Debug Commands
 
 ```bash
-# First-time setup (one-time)
-make sops-keygen
-# Copy the public key output and update .sops.yaml
+# Check Flux reconciliation
+flux get ks -A
+flux get hr -A
 
-# Edit bootstrap secrets
-make sops-decrypt
-vim helm/infisical/secrets.yaml
-make sops-encrypt
-rm helm/infisical/secrets.yaml   # Never commit plaintext!
+# Check Helm releases status
+kubectl get hr -A -o wide
 
-# Add application secrets via Infisical
-# 1. Access Infisical UI at https://infisical.homelab.local
-# 2. Create project, add secrets
-# 3. Create machine identity for the operator
-# 4. Add InfisicalSecret CRD in helm/secrets/
+# View Flux logs
+kubectl logs -n flux-system deploy/source-controller
+kubectl logs -n flux-system deploy/helm-controller
+
+# Terraform debug
+TF_LOG=DEBUG terraform apply
 ```

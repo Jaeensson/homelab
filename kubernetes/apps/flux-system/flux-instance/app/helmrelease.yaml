@@ -14,18 +14,20 @@ spec:
     instance:
       distribution:
         artifact: oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests:v0.43.0
-      cluster:
-        networkPolicy: false
-      components:
-        - source-controller
-        - kustomize-controller
-        - helm-controller
-        - notification-controller
+      # cluster:
+      #   networkPolicy: false
+      # components:
+      #   - source-controller
+      #   - kustomize-controller
+      #   - helm-controller
+      #   - notification-controller
       sync:
         kind: GitRepository
-        url: https://github.com/jaeensson/homelab
+        url: https://github.com/jaeensson/homelab.git
         ref: refs/heads/main
         path: kubernetes/flux/cluster
+        secretRef:
+          name: github-webhook-token-secret
         interval: 1h
       kustomize:
         patches:
