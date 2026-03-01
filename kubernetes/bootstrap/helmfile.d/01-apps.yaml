@@ -8,12 +8,12 @@ helmDefaults:
   createNamespace: true
 
 releases:
-  # - name: cert-manager
-  #   namespace: cert-manager
-  #   chart: oci://quay.io/jetstack/charts/cert-manager
-  #   version: v1.19.4
-  #   values:
-  #     - ./templates/values.yaml.gotmpl
+  - name: cert-manager
+    namespace: cert-manager
+    chart: oci://quay.io/jetstack/charts/cert-manager
+    version: v1.19.4
+    values:
+      - ./templates/values.yaml.gotmpl
 
   - name: external-secrets
     namespace: external-secrets
@@ -21,8 +21,6 @@ releases:
     version: 2.0.1
     values:
       - ./templates/values.yaml.gotmpl
-    # needs:
-    #   - cert-manager/cert-manager
 
   - name: flux-operator
     namespace: flux-system
