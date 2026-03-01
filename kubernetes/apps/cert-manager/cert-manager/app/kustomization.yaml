@@ -4,5 +4,6 @@ namespace: cert-manager
 resources:
   - ./helmrelease.yaml
   - ./clusterissuer.yaml
-  - ./externalsecret.yaml
+  #- ./externalsecret.yaml
+  - ./infisical-secret.yaml
   - ./ocirepository.yaml

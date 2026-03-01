@@ -1,0 +1,22 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: infisical-operator
+  
+spec:
+  releaseName: infisical-operator
+  chartRef:
+    kind: HelmRepository
+    name: infisical
+  interval: 30m
+
+  chart:
+    spec:
+      chart: secrets-operator
+      version: "0.10.25" # Always check for the latest 2026 version
+      sourceRef:
+        kind: HelmRepository
+        name: infisical
+  install:
+    createNamespace: true
