@@ -9,6 +9,10 @@ helmDefaults:
     - --include-crds
     - --no-hooks
 
+repositories:
+  - name: your-private-git-repo-hosted-charts
+    url: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
+
 releases:
   - name: cloudflare-dns
     namespace: network

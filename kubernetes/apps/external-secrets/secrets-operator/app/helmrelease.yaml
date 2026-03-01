@@ -2,10 +2,10 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: infisical-operator
+  name: secrets-operator
   
 spec:
-  releaseName: infisical-operator
+  releaseName: secrets-operator
   chartRef:
     kind: HelmRepository
     name: infisical
@@ -20,3 +20,8 @@ spec:
         name: infisical
   install:
     createNamespace: true
+
+  values:
+    controllerManager:
+      serviceAccount:
+        create: true
