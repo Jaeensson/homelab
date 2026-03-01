@@ -34,6 +34,13 @@ crds:
 resources: 
     envsubst < "{{ kubernetes_dir }}/bootstrap/resources.yaml.tmpl" | kubectl apply -f -
 
+kustomizations:
+    find "{{ kubernetes_dir }}/apps" -name "ks.yaml" | while IFS= read -r f; do \
+        dir=$(dirname "$f")/app; \
+        echo "Applying Kustomization from $dir"; \
+        kustomize build "$dir" | kubectl apply --server-side --force-conflicts -f -; \
+    done
+
 apps:
     helmfile -f "{{ kubernetes_dir }}/bootstrap/helmfile.d/01-apps.yaml" sync --hide-notes
 

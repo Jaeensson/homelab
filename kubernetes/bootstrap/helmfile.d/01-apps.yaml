@@ -5,6 +5,7 @@ helmDefaults:
   cleanupOnFail: true
   wait: true
   waitForJobs: true
+  createNamespace: true
 
 releases:
   # - name: cert-manager

@@ -18,3 +18,4 @@ deploy:
     just k8s::resources
     just k8s::crds
     just k8s::apps
+    just k8s::kustomizations

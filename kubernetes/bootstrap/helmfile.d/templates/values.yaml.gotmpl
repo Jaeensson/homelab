@@ -1,1 +1,4 @@
-{{ (fromYaml (readFile (printf "../../../../kubernetes/apps/%s/%s/app/helmrelease.yaml" .Release.Namespace .Release.Name))).spec.values | toYaml }}
+{{ $hr := fromYaml (readFile (printf "../../../../kubernetes/apps/%s/%s/app/helmrelease.yaml" .Release.Namespace .Release.Name)) }}
+{{- $hrValues := $hr.spec.values }}
+{{- $hrValues = merge $hrValues (dict "namespace" .Release.Namespace) }}
+{{ $hrValues | toYaml }}
