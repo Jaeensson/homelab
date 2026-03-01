@@ -21,18 +21,18 @@ wait:
 
 namespaces:
     find "{{ kubernetes_dir }}/apps" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r dir; do \
-        if ! kustomize build "$dir" | yq ea -e 'select(.kind == "Namespace")' | kubectl apply --server-side -f -; then \
+        if ! kustomize build "$dir" | yq ea -e 'select(.kind == "Namespace")' | kubectl apply --server-side --field-manager bootstrap --force-conflicts -f -; then \
             echo "Failed to apply namespaces"; \
         fi; \
     done
 
 crds:
-    if ! helmfile -f "{{ kubernetes_dir }}/bootstrap/helmfile.d/00-crds.yaml" template -q | yq ea -e 'select(.kind == "CustomResourceDefinition")' | kubectl apply --server-side -f -; then \
+    if ! helmfile -f "{{ kubernetes_dir }}/bootstrap/helmfile.d/00-crds.yaml" template -q | yq ea -e 'select(.kind == "CustomResourceDefinition")' | kubectl apply --server-side --field-manager bootstrap --force-conflicts -f -; then \
         echo "Failed to apply crds"; \
     fi;
 
 resources: 
-    envsubst < "{{ kubernetes_dir }}/bootstrap/resources.yaml.tmpl" | kubectl apply -f -
+    envsubst < "{{ kubernetes_dir }}/bootstrap/resources.yaml.tmpl" | kubectl apply --server-side --field-manager bootstrap --force-conflicts -f -
 
 kustomizations:
     find "{{ kubernetes_dir }}/apps" -name "ks.yaml" | while IFS= read -r f; do \
