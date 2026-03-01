@@ -12,11 +12,15 @@ spec:
         namespaces:
           from: All
 
-    - name: web-secure
-      protocol: HTTPS
-      port: 443
-      tls:
-        mode: Terminate 
-      allowedRoutes:
-        namespaces:
-          from: All
+    # - name: web-secure
+    #   protocol: HTTPS
+    #   port: 443
+    #   allowedRoutes:
+    #     namespaces:
+    #       from: All
+      # tls:
+      #   mode: Terminate
+      #   certificateRefs:
+      #     - name: 
+      #       kind: 
+      #       namespace:
