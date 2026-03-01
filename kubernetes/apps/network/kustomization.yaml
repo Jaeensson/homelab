@@ -7,3 +7,4 @@ namespace: network
 resources:
   - ./namespace.yaml
   - ./certificates/ks.yaml
+  - ./traefik/ks.yaml
