@@ -14,8 +14,8 @@ spec:
     instance:
       distribution:
         artifact: oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests:v0.43.0
-      # cluster:
-      #   networkPolicy: false
+      cluster:
+        networkPolicy: false
       # components:
       #   - source-controller
       #   - kustomize-controller
@@ -28,6 +28,7 @@ spec:
         path: kubernetes/flux/cluster
         secretRef:
           name: github-webhook-token-secret
+          key: token
         interval: 1h
       kustomize:
         patches:
