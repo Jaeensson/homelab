@@ -6,7 +6,7 @@ metadata:
   name: infisical-system
 spec:
   interval: 1h
-  path: ./kubernetes/apps/infisical-system/infisical-operator/app
+  path: ./kubernetes/apps/infisical-system/secrets-operator/app
   prune: true
   sourceRef:
     kind: GitRepository
