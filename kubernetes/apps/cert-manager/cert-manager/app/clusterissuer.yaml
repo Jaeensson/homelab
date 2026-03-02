@@ -14,8 +14,8 @@ spec:
       - dns01:
           cloudflare:
             apiTokenSecretRef:
-              name: cloudflare-api-token-secret
-              key: CLOUDFLARE_DNS_TOKEN
+              name: cloudflare-api-token
+              key: token
         selector:
           dnsZones:
             - egenintres.se
