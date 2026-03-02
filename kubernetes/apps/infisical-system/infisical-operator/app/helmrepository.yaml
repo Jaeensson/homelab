@@ -6,3 +6,16 @@ metadata:
 spec:
   interval: 1h
   url: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmChart
+metadata:
+  name: secrets-operator
+  namespace: default
+spec:
+  interval: 1h
+  chart: secrets-operator
+  reconcileStrategy: ChartVersion
+  sourceRef:
+    kind: HelmRepository
+    name: infisical-charts

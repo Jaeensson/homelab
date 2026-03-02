@@ -8,42 +8,42 @@ helmDefaults:
   createNamespace: true
 
 releases:
-  - name: cilium
-    namespace: kube-system
-    chart: oci://quay.io/cilium/charts/cilium
-    version: 1.19.1
-    values:
-      - ./templates/values.yaml.gotmpl
-    hooks:
-      - # Wait for Cilium CRDs to be available
-        command: bash
-        args:
-          - -c
-          - until kubectl get crd ciliumloadbalancerippools.cilium.io ciliumbgpadvertisements.cilium.io ciliumbgppeerconfigs.cilium.io ciliumbgpclusterconfigs.cilium.io &>/dev/null; do sleep 5; done
-        events:
-          - postsync
-        showlogs: true
+  # - name: cilium
+  #   namespace: kube-system
+  #   chart: oci://quay.io/cilium/charts/cilium
+  #   version: 1.19.1
+  #   values:
+  #     - ./templates/values.yaml.gotmpl
+  #   hooks:
+  #     - # Wait for Cilium CRDs to be available
+  #       command: bash
+  #       args:
+  #         - -c
+  #         - until kubectl get crd ciliumloadbalancerippools.cilium.io ciliumbgpadvertisements.cilium.io ciliumbgppeerconfigs.cilium.io ciliumbgpclusterconfigs.cilium.io &>/dev/null; do sleep 5; done
+  #       events:
+  #         - postsync
+  #       showlogs: true
 
-  - name: cert-manager
-    namespace: cert-manager
-    chart: oci://quay.io/jetstack/charts/cert-manager
-    version: v1.19.4
-    values:
-      - ./templates/values.yaml.gotmpl
-
-  # - name: external-secrets
-  #   namespace: external-secrets
-  #   chart: oci://ghcr.io/external-secrets/charts/external-secrets
-  #   version: 2.0.1
+  # - name: cert-manager
+  #   namespace: cert-manager
+  #   chart: oci://quay.io/jetstack/charts/cert-manager
+  #   version: v1.19.4
   #   values:
   #     - ./templates/values.yaml.gotmpl
 
-  - name: secrets-operator
-    namespace: external-secrets
-    chart: infisical/secrets-operator
-    version: 0.10.25
-    values:
-      - ./templates/values.yaml.gotmpl
+  # # - name: external-secrets
+  # #   namespace: external-secrets
+  # #   chart: oci://ghcr.io/external-secrets/charts/external-secrets
+  # #   version: 2.0.1
+  # #   values:
+  # #     - ./templates/values.yaml.gotmpl
+
+  # - name: secrets-operator
+  #   namespace: external-secrets
+  #   chart: infisical/secrets-operator
+  #   version: 0.10.25
+  #   values:
+  #     - ./templates/values.yaml.gotmpl
 
   - name: flux-operator
     namespace: flux-system
@@ -51,9 +51,6 @@ releases:
     version: 0.43.0
     values:
       - ./templates/values.yaml.gotmpl
-    needs:
-      #- external-secrets/external-secrets
-      - external-secrets/secrets-operator
 
   - name: flux-instance
     namespace: flux-system

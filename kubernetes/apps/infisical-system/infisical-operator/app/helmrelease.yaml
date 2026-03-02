@@ -2,13 +2,12 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: secrets-operator
-  
+  name: secrets-operator  
 spec:
   releaseName: secrets-operator
   chartRef:
-    kind: HelmRepository
-    name: infisical
+    kind: HelmChart
+    name: secrets-operator
   interval: 30m
 
   chart:
@@ -16,8 +15,8 @@ spec:
       chart: secrets-operator
       version: "0.10.25" # Always check for the latest 2026 version
       sourceRef:
-        kind: HelmRepository
-        name: infisical
+        kind: HelmChart
+        name: secrets-operator
   install:
     createNamespace: true
 
