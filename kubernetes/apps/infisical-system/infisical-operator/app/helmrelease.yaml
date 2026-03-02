@@ -15,8 +15,8 @@ spec:
       chart: secrets-operator
       version: "0.10.25" # Always check for the latest 2026 version
       sourceRef:
-        kind: HelmChart
-        name: secrets-operator
+        kind: HelmRepository
+        name: infisical-charts
   install:
     createNamespace: true
 
