@@ -9,7 +9,7 @@ This is a Kubernetes/Terraform homelab infrastructure repository using Flux for 
 ├── .justfile              # Root justfile with deploy command
 ├── .env                   # Environment variables (secrets)
 ├── kubernetes/            # Kubernetes manifests and Flux configuration
-│   ├── apps/              # Application manifests (flux-system, external-secrets)
+│   ├── apps/              # Application manifests (flux-system, infisical-system)
 │   ├── bootstrap/         # Bootstrap resources and helmfiles
 │   └── flux/              # Flux Kustomizations
 └── terraform/             # Terraform for Proxmox + Talos cluster
@@ -74,11 +74,11 @@ yamlfmt -c terraform/.yamlfmt.yaml -w .
 1. **GitOps-first**: All changes should be declarative and version-controlled
 2. **Idempotency**: Resources should be idempotent (safe to reapply)
 3. **Separation of concerns**: Bootstrap resources separate from app resources
-4. **Sensitive data**: Never commit secrets; use External Secrets or SOPS
+4. **Sensitive data**: Never commit secrets; use Infisical Secrets Operator
 
 ### YAML Conventions
 
-- **File naming**: kebab-case (`helmrelease.yaml`, `kustomization.yaml`, `externalsecret.yaml`)
+- **File naming**: kebab-case (`helmrelease.yaml`, `kustomization.yaml`, `infisicalsecret.yaml`)
 - **Indentation**: 2 spaces
 - **Document separators**: Use `---` at start of each YAML document
 - **Block style arrays**: Use block style for multi-line arrays (configured in yamlfmt)
@@ -114,7 +114,7 @@ yamlfmt -c terraform/.yamlfmt.yaml -w .
 | Files (YAML) | kebab-case | `helmrelease.yaml` |
 | Files (TF) | snake_case | `main.tf` |
 | Variables | snake_case | `proxmox_endpoint` |
-| Kubernetes objects | kebab-case | `external-secrets` |
+| Kubernetes objects | kebab-case | `infisical-system` |
 | Namespaces | kebab-case | `flux-system` |
 
 ### Common Patterns
