@@ -5,11 +5,7 @@ metadata:
   name: secrets-operator  
 spec:
   releaseName: secrets-operator
-  chartRef:
-    kind: HelmChart
-    name: secrets-operator
-  interval: 30m
-
+  
   chart:
     spec:
       chart: secrets-operator
