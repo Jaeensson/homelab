@@ -27,7 +27,7 @@ spec:
         ref: refs/heads/main
         path: kubernetes/flux/cluster
         secretRef:
-          name: github-webhook-token-secret
+          name: github-webhook-token
           key: token
         interval: 1h
       kustomize:
