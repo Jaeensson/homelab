@@ -3,4 +3,4 @@ kind: Kustomization
 namespace: infisical-system
 resources:
   - ./namespace.yaml
-  - ./infisical-operator/ks.yaml
+  - ./secrets-operator/ks.yaml
