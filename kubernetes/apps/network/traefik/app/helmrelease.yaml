@@ -21,7 +21,7 @@ spec:
     providers:
       # @schema additionalProperties: false
       kubernetesCRD:
-        enabled: true
+        enabled: false
       kubernetesIngress:
         enabled: false
       kubernetesGateway:

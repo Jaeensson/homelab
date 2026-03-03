@@ -1,0 +1,15 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: metallb
+  namespace: network
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: metallb
+  interval: 1h
+  values:
+    controller:
+      enabled: true
+    speaker:
+      enabled: true
