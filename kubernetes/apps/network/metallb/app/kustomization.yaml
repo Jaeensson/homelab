@@ -4,3 +4,5 @@ namespace: network
 resources:
   - ./ocirepository.yaml
   - ./helmrelease.yaml
+  - ./ipaddresspool.yaml
+  - ./l2advertisement.yaml
