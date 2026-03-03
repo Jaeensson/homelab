@@ -42,7 +42,7 @@ kustomizations:
     done
 
 apps:
-    helmfile -f "{{ kubernetes_dir }}/bootstrap/helmfile.d/01-apps.yaml" sync --hide-notes
+    helmfile -f "{{ kubernetes_dir }}/bootstrap/helmfile.d/01-apps.yaml" sync --hide-notes --debug
 
 prune-pods:
     for phase in Failed Pending Succeeded; do \

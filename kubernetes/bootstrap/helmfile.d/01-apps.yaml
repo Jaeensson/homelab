@@ -18,12 +18,12 @@ releases:
     values:
       - ./templates/values.yaml.gotmpl
   
-  - name: metallb
-    namespace: network
-    chart: oci://quay.io/metallb/chart/metallb
-    version: 0.15.3
-    values:
-      - ./templates/values.yaml.gotmpl
+  # - name: metallb
+  #   namespace: network
+  #   chart: oci://quay.io/metallb/chart/metallb
+  #   version: 0.15.3
+  #   values:
+  #     - ./templates/values.yaml.gotmpl
 
   - name: cert-manager
     namespace: cert-manager
@@ -40,8 +40,8 @@ releases:
     version: 0.43.0
     values:
       - ./templates/values.yaml.gotmpl
-    needs:
-      - cert-manager/cert-manager
+    # needs:
+    #   - cert-manager/cert-manager
 
   - name: flux-instance
     namespace: flux-system

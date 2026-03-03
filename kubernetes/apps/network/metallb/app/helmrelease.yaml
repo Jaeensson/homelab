@@ -11,5 +11,19 @@ spec:
   values:
     controller:
       enabled: true
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
     speaker:
       enabled: true
+      securityContext:
+        allowPrivilegeEscalation: true
+        runAsNonRoot: false
+        runAsUser: 0
+        capabilities:
+          add:
+            - NET_ADMIN
+            - NET_RAW
+            - SYS_ADMIN
