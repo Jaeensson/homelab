@@ -16,7 +16,6 @@ spec:
     api:  
       dashboard: true
       insecure: false
-      disabledashboardad: true
 
     providers:
       # @schema additionalProperties: false
@@ -50,7 +49,7 @@ spec:
 
     ports:
       web:
-        address: :80
+        exposedPort: 80
         port: 8000
         http:
           redirections:
@@ -59,7 +58,7 @@ spec:
               scheme: https
               permanent: true
       websecure:
-        address: :443
+        exposedPort: 443
         port: 8443
         http:
           # -- See [upstream documentation](https://doc.traefik.io/traefik/security/request-path/#encoded-character-filtering)
