@@ -13,9 +13,8 @@ spec:
 
   rules:
     - backendRefs:
-        - name: api@internal # The internal Traefik service
-          kind: TraefikService
-          group: traefik.io
+        - name: traefik
+          port: 9000
 
       matches:
         - path:

@@ -48,6 +48,10 @@ spec:
         content: ""
 
     ports:
+      traefik:
+        port: 9000
+        exposedPort: 9000
+        protocol: TCP
       web:
         exposedPort: 80
         port: 8000
