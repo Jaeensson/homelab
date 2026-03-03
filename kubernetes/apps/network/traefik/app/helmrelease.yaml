@@ -16,11 +16,12 @@ spec:
     api:  
       dashboard: true
       insecure: false
+      disabledashboardad: true
 
     providers:
       # @schema additionalProperties: false
       kubernetesCRD:
-        enabled: false
+        enabled: true
       kubernetesIngress:
         enabled: false
       kubernetesGateway:

@@ -6,7 +6,6 @@ metadata:
 spec:
   parentRefs:
     - name: traefik
-      sectionName: http
       kind: Gateway
 
   hostnames:
@@ -14,9 +13,9 @@ spec:
 
   rules:
     - backendRefs:
-        - name: traefik
-          namespace: network
-          port: 8000
+        - name: api@internal # The internal Traefik service
+          kind: TraefikService
+          group: traefik.io
 
       matches:
         - path:
