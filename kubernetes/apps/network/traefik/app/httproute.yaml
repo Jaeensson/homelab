@@ -16,9 +16,12 @@ spec:
     - backendRefs:
         - name: traefik
           namespace: network
-          port: 8080
+          port: 8000
 
       matches:
         - path:
             type: PathPrefix
-            value: /
+            value: /dashboard
+        - path:
+            type: PathPrefix
+            value: /api
