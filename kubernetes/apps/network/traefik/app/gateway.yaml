@@ -19,8 +19,7 @@ spec:
       port: 8000
       allowedRoutes:
         namespaces:
-          from: All 
-
+          from: All
     - name: websecure
       protocol: HTTPS
       port: 8443
@@ -29,7 +28,6 @@ spec:
         certificateRefs:
           - name: egenintres-se-tls
             namespace: network
-
       allowedRoutes:
         namespaces:
           from: All

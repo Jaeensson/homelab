@@ -1,6 +1,6 @@
 ---
 bridge: vmbr0
-dns: 
+dns:
   - 192.168.1.21
 netmask: "/22"
 gateway: 192.168.1.1

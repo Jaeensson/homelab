@@ -7,10 +7,8 @@ spec:
   parentRefs:
     - name: traefik
       kind: Gateway
-
   hostnames:
     - traefik.test.egenintres.se
-
   rules:
     - matches:
         - path:
@@ -23,14 +21,11 @@ spec:
               type: ReplaceFullPath
               replaceFullPath: /dashboard/
             statusCode: 302
-
     - backendRefs:
         - name: api@internal
           kind: TraefikService
           group: traefik.io
-
       matches:
-
         - path:
             type: PathPrefix
             value: /dashboard
