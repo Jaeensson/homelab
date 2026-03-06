@@ -10,6 +10,9 @@ spec:
     name: traefik
   interval: 1h
   values:
+    service:
+      spec:
+        loadBalancerIP: 192.168.0.100
     gateway:
       enabled: false
     gatewayClass:
@@ -85,7 +88,7 @@ spec:
           ## There are known limitations when trying to listen on same ports for
           ## TCP & UDP (Http3). There is a workaround in this chart using dual Service.
           ## https://github.com/kubernetes/kubernetes/issues/47249#issuecomment-587960741
-          enabled: false
+          enabled: true
           advertisedPort: # @schema type:[integer, null]; minimum:0
         forwardedHeaders:
           # -- Trust forwarded headers information (X-Forwarded-*).
