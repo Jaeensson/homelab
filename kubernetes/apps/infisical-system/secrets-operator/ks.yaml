@@ -3,7 +3,8 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: infisical-system
+  name: secrets-operator
+  namespace: infisical-system
 spec:
   interval: 1h
   path: ./kubernetes/apps/infisical-system/secrets-operator/app
