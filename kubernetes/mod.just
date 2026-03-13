@@ -5,7 +5,6 @@ set dotenv-load := true
 
 kubernetes_dir := justfile_dir() + '/kubernetes'
 
-
 [private]
 default:
     namespaces crds resources
@@ -17,7 +16,6 @@ wait:
             sleep 5; \
         done \
     fi
-
 
 namespaces:
     find "{{ kubernetes_dir }}/apps" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r dir; do \
@@ -49,10 +47,16 @@ prune-pods:
         kubectl delete pods -A --field-selector status.phase="$phase" --ignore-not-found=true; \
     done
 
+sync-ks:
+    kubectl get ks --no-headers -A | while read -r ns name _; do \
+        kubectl -n "$ns" annotate --field-manager flux-client-side-apply --overwrite ks "$name" reconcile.fluxcd.io/requestedAt="$(date +%s)"; \
+    done
+
 apply-ks ns ks:
     just k8s render-local-ks "{{ ns }}" "{{ ks }}" | kubectl apply --server-side --force-conflicts --field-manager=kustomize-controller -f /dev/stdin
 
+delete-ks ns ks:
+    just k8s render-local-ks "{{ ns }}" "{{ ks }}" | kubectl delete -f /dev/stdin
 
-[private]
 render-local-ks ns ks:
-    flux build ks --namespace "{{ ns }}" --path "{{ kubernetes_dir }}/flux/cluster" "{{ ks }}"
+    flux-local build ks --namespace "{{ ns }}" --path "{{ kubernetes_dir }}/flux/cluster" "{{ ks }}"
