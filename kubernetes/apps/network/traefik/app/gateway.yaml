@@ -19,7 +19,7 @@ spec:
       port: 8000
       allowedRoutes:
         namespaces:
-          from: All
+          from: Same
     - name: websecure
       protocol: HTTPS
       port: 8443
