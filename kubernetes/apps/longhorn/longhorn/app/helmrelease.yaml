@@ -17,6 +17,9 @@ spec:
     defaultSettings:
       defaultDataPath: /var/mnt/longhorn
       defaultReplicaCount: 2
+    controllerManager:
+      serviceAccount:
+        create: true
     httproute:
       enabled: true
       parentRefs:
