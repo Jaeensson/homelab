@@ -29,7 +29,7 @@ module "talos_cluster" {
       ip           = "192.168.2.100"
       cpu_cores    = 4
       ram_mb       = 16384
-      disk_size_gb = 50
+      disk_size_gb = 100
     }
   ]
 
@@ -41,7 +41,7 @@ module "talos_cluster" {
       ip           = "192.168.2.101"
       cpu_cores    = 4
       ram_mb       = 16384
-      disk_size_gb = 50
+      disk_size_gb = 100
     }
   ]
 }

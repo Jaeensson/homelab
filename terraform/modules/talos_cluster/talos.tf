@@ -20,6 +20,7 @@ data "talos_machine_configuration" "this" {
       netmask   = var.network_netmask
       gateway   = var.network_gateway
       node_name = local.all_nodes[count.index].node_name
+      node_type = local.all_nodes[count.index].node_type
       image     = data.talos_image_factory_urls.this.urls.installer
     })
   ]

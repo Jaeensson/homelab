@@ -2,7 +2,16 @@ cluster:
   allowSchedulingOnControlPlanes: true
 
 machine:
-  install: 
+%{ if node_type == "controlplane" ~}
+  features:
+    kubernetesTalosAPIAccess:
+      allowedKubernetesNamespaces:
+        - system-upgrade
+      allowedRoles:
+        - os:admin
+      enabled: true
+%{ endif ~}
+  install:
     disk: /dev/sda
     image: ${image}
 
