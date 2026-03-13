@@ -9,6 +9,25 @@ spec:
   interval: 1h
   path: ./kubernetes/apps/network/metallb/app
   prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: network
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: metallb-config
+  namespace: network
+spec:
+  interval: 1h
+  path: ./kubernetes/apps/network/metallb/config
+  dependsOn:
+    - name: metallb
+  prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
