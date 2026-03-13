@@ -98,15 +98,19 @@ spec:
       # -- Enable persistence using Persistent Volume Claims
       # ref: http://kubernetes.io/docs/user-guide/persistent-volumes/.
       # It can be used to store TLS certificates along with `certificatesResolvers.<name>.acme.storage`  option
-      enabled: false
+      enabled: true
       name: data
-      existingClaim: ""
       accessMode: ReadWriteOnce
       size: 128Mi
-      storageClass: # @schema type:[string, null]
-      volumeName: ""
+      storageClass: longhorn
       path: /data
-      annotations: {}
-      # -- Only mount a subpath of the Volume into the pod
-      subPath: ""
     hostNetwork: false
+    metrics:
+      prometheus:
+        entryPoint: metrics
+        service:
+          # -- Create a dedicated metrics service to use with ServiceMonitor
+          enabled: true
+        serviceMonitor:
+          # -- Enable optional CR for Prometheus Operator. See EXAMPLES.md for more details.
+          enabled: true
