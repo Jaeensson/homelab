@@ -19,7 +19,3 @@ apply:
 get-config:
     terraform output -raw kubeconfig > ~/.kube/config \
     && terraform output -raw talosconfig > ~/.talos/config
-
-
-
-#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
