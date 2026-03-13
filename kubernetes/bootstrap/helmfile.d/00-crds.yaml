@@ -27,3 +27,7 @@ releases:
     namespace: observability
     chart: oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack
     version: 82.4.3
+  - name: traefik
+    namespace: network
+    chart: oci://ghcr.io/traefik/helm/traefik
+    version: 39.0.2
