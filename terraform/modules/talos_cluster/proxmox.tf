@@ -70,7 +70,13 @@ resource "proxmox_virtual_environment_vm" "vm" {
   disk {
     datastore_id = var.proxmox_storage
     interface    = "scsi0"
-    size         = local.all_nodes[count.index].disk_size_gb
+    size         = local.all_nodes[count.index].system_disk_size_gb
+  }
+
+  disk {
+    datastore_id = var.proxmox_storage
+    interface    = "scsi1"
+    size         = local.all_nodes[count.index].storage_disk_size_gb
   }
 
   network_device {

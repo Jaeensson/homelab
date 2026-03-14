@@ -78,7 +78,8 @@ variable "vm_control_planes" {
     ip           = string
     cpu_cores    = number
     ram_mb       = number
-    disk_size_gb = number
+    system_disk_size_gb = number
+    storage_disk_size_gb = number
   }))
   default = []
 }
@@ -92,7 +93,8 @@ variable "vm_workers" {
     ip           = string
     cpu_cores    = number
     ram_mb       = number
-    disk_size_gb = number
+    system_disk_size_gb = number
+    storage_disk_size_gb = number
   }))
   default = []
 }

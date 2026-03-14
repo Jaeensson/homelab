@@ -15,16 +15,6 @@ machine:
     disk: /dev/sda
     image: ${image}
 
-  kubelet:
-    extraMounts:
-      - destination: /var/mnt/longhorn
-        type: bind
-        source: /var/mnt/longhorn
-        options:
-          - bind
-          - rshared
-          - rw
-
   time:
     servers:
       - time.cloudflare.com
@@ -45,17 +35,19 @@ machine:
           - network: 0.0.0.0/0
             gateway: ${gateway}
 
+  nodeLabels:
+    node.longhorn.io/create-default-disk: true
 ---
 apiVersion: v1alpha1
 kind: HostnameConfig
 hostname: ${node_name}
 auto: off
-
 ---
 apiVersion: v1alpha1
 kind: UserVolumeConfig
 name: longhorn
 provisioning:
   diskSelector:
-    match: disk.transport == 'scsi' && !system_disk
-  grow: false
+    match: disk.dev_path == '/dev/sdb'
+  grow: true
+  minSize: ${storage_disk_size_gb}GB

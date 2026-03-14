@@ -8,7 +8,8 @@ locals {
       ip           = node.ip
       cpu_cores    = node.cpu_cores
       ram_mb       = node.ram_mb
-      disk_size_gb = node.disk_size_gb
+      system_disk_size_gb = node.system_disk_size_gb
+      storage_disk_size_gb = node.storage_disk_size_gb
     }],
     [for node in var.vm_workers : {
       node_type    = "worker"
@@ -18,7 +19,8 @@ locals {
       ip           = node.ip
       cpu_cores    = node.cpu_cores
       ram_mb       = node.ram_mb
-      disk_size_gb = node.disk_size_gb
+      system_disk_size_gb = node.system_disk_size_gb
+      storage_disk_size_gb = node.storage_disk_size_gb
     }]
   )
 

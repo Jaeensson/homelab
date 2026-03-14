@@ -3,7 +3,7 @@ module "talos_cluster" {
   proxmox_endpoint = var.proxmox_endpoint
   proxmox_token    = var.proxmox_token
 
-  talos_version = "1.12.4"
+  talos_version = "1.12.5"
   talos_extensions = [
     "siderolabs/i915",
     "siderolabs/intel-ucode",
@@ -29,7 +29,8 @@ module "talos_cluster" {
       ip           = "192.168.2.100"
       cpu_cores    = 4
       ram_mb       = 16384
-      disk_size_gb = 100
+      system_disk_size_gb = 50
+      storage_disk_size_gb = 100
     }
   ]
 
@@ -41,7 +42,8 @@ module "talos_cluster" {
       ip           = "192.168.2.101"
       cpu_cores    = 4
       ram_mb       = 16384
-      disk_size_gb = 100
+      system_disk_size_gb = 50
+      storage_disk_size_gb = 100
     }
   ]
 }

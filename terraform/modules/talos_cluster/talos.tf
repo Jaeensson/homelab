@@ -21,6 +21,7 @@ data "talos_machine_configuration" "this" {
       gateway   = var.network_gateway
       node_name = local.all_nodes[count.index].node_name
       node_type = local.all_nodes[count.index].node_type
+      storage_disk_size_gb = local.all_nodes[count.index].storage_disk_size_gb
       image     = data.talos_image_factory_urls.this.urls.installer
     })
   ]
