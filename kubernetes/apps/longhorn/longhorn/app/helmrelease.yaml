@@ -15,9 +15,14 @@ spec:
         kind: HelmRepository
         name: longhorn
   values:
+    persistence:
+      defaultClassReplicaCount: 2
+      reclaimPolicy: Retain
     defaultSettings:
-      defaultDataPath: /var/mnt/longhorn/
-      defaultReplicaCount: 2
+      createDefaultDiskLabeledNodes: true
+      defaultReplicaCount: "2"
+      defaultDataPath: "/var/mnt/longhorn/"
+      reclaimPolicy: Retain
     httproute:
       enabled: true
       parentRefs:
