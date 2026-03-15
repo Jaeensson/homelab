@@ -5,3 +5,4 @@ namespace: longhorn
 resources:
   - ./helmrepository.yaml
   - ./helmrelease.yaml
+  - ./recurringjob.yaml
