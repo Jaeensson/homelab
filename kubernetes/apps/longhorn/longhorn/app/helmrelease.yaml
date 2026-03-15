@@ -31,3 +31,5 @@ spec:
           namespace: network
       hostnames:
         - longhorn.test.egenintres.se
+    defaultBackupStore:
+      backupTarget: nfs://192.168.1.113:/volume1/NetBackup/longhorn
