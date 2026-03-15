@@ -6,3 +6,4 @@ resources:
   - ./infisicalsecret.yaml
   - ./receiver.yaml
   - ./helmrelease.yaml
+  - ./grafanadashboard.yaml
